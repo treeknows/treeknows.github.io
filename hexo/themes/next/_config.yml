@@ -99,7 +99,11 @@ creative_commons:
 # Schemes
 scheme: Muse
 #scheme: Mist
+
+## 左右结构，个人信息在左
 #scheme: Pisces
+
+## 类似于Pisces，文章分隔符不一样
 #scheme: Gemini
 
 # Dark Mode
@@ -117,9 +121,9 @@ darkmode: false
 # External url should start with http:// or https://
 menu:
   home: / || fa fa-home
-  #about: /about/ || fa fa-user
-  #tags: /tags/ || fa fa-tags
-  #categories: /categories/ || fa fa-th
+  about: /about/ || fa fa-user
+  tags: /tags/ || fa fa-tags
+  categories: /categories/ || fa fa-th
   archives: /archives/ || fa fa-archive
   #schedule: /schedule/ || fa fa-calendar
   #sitemap: /sitemap.xml || fa fa-sitemap
