@@ -206,6 +206,12 @@
         {{ post.content }}
       {%- endif %}
     </div>
+	 <!-- 文章结束表示语-->
+    <div>
+      {% if not is_index %}
+        {% include 'passage-end-tag.swig' %}
+      {% endif %}
+    </div>
 
     {#####################}
     {### END POST BODY ###}
