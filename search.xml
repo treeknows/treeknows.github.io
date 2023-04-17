@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>个人博客搭建之路</title>
-    <url>/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E4%B9%8B%E8%B7%AF/</url>
-    <content><![CDATA[<h1 id="This-is-a-title"><a href="#This-is-a-title" class="headerlink" title="This is a title"></a>This is a title</h1><p><img src="/.io//picture_test.jpg" alt="图床测试"></p>
-]]></content>
-      <tags>
-        <tag>经验</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello World</title>
     <url>/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -31,5 +22,14 @@
       <categories>
         <category>Demo</category>
       </categories>
+  </entry>
+  <entry>
+    <title>个人博客搭建之路</title>
+    <url>/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E4%B9%8B%E8%B7%AF/</url>
+    <content><![CDATA[<h1 id="This-is-a-title"><a href="#This-is-a-title" class="headerlink" title="This is a title"></a>This is a title</h1><p><img src="/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E4%B9%8B%E8%B7%AF/picture_test.jpg" alt="图床测试"></p>
+]]></content>
+      <tags>
+        <tag>经验</tag>
+      </tags>
   </entry>
 </search>
