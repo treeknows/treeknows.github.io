@@ -39,3 +39,5 @@ $ hexo deploy
 ```
 
 More info: [Deployment](https://hexo.io/docs/one-command-deployment.html)
+
+![test](https://github.com/treeknows/pictures_only/blob/master/hello-world/picture_test.jpg?raw=true)
