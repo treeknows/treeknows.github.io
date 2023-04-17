@@ -27,7 +27,7 @@
   <entry>
     <title>个人博客搭建之路</title>
     <url>/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E4%B9%8B%E8%B7%AF/</url>
-    <content><![CDATA[<h1 id="This-is-a-title"><a href="#This-is-a-title" class="headerlink" title="This is a title"></a>This is a title</h1><p><img src="/.io//picture_test.jpg" alt="图床测试"></p>
+    <content><![CDATA[<h1 id="This-is-a-title"><a href="#This-is-a-title" class="headerlink" title="This is a title"></a>This is a title</h1><p><img src="https://github.com/treeknows/pictures_only/blob/master/hello-world/picture_test.jpg?raw=true" alt="图床测试"></p>
 ]]></content>
       <tags>
         <tag>经验</tag>
