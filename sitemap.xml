@@ -11,15 +11,6 @@
   </url>
   
   <url>
-    <loc>https://treeknows.github.io/hello-world/</loc>
-    
-    <lastmod>2023-04-17</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://treeknows.github.io/about/index.html</loc>
     
     <lastmod>2023-04-14</lastmod>
@@ -78,13 +69,6 @@
   
   <url>
     <loc>https://treeknows.github.io/categories/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/</loc>
-    <lastmod>2023-04-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://treeknows.github.io/categories/Demo/</loc>
     <lastmod>2023-04-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
