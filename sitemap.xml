@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://treeknows.github.io/birth-of-my-blog/</loc>
+    <loc>https://treeknows.github.io/about/index.html</loc>
     
     <lastmod>2023-04-20</lastmod>
     
@@ -11,9 +11,9 @@
   </url>
   
   <url>
-    <loc>https://treeknows.github.io/about/index.html</loc>
+    <loc>https://treeknows.github.io/birth-of-my-blog/</loc>
     
-    <lastmod>2023-04-14</lastmod>
+    <lastmod>2023-04-20</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
