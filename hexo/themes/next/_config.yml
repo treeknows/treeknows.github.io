@@ -59,7 +59,8 @@ footer:
     # Icon name in Font Awesome. See: https://fontawesome.com/icons
     name: fa fa-heart
     # If you want to animate the icon, set it to true.
-    animated: false
+    ## 网站底部红心跳动动画
+    animated: true
     # Change the color of icon, using Hex Code.
     color: "#ff0000"
 
@@ -71,7 +72,7 @@ footer:
   powered: false
 
   # Beian ICP and gongan information for Chinese users. See: https://beian.miit.gov.cn, http://www.beian.gov.cn
-  ## 备案...
+  ## 是备案的意思...
   beian:
     enable: false
     icp:
@@ -91,7 +92,7 @@ creative_commons:
   license: by-nc-sa
   ## 在侧边栏显示一个协议的图标
   sidebar: false
-  ## 在文章底部显示协议的图标
+  ## 文章底部显示版权信息
   post: true
   language:
 
