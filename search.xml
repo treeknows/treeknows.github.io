@@ -204,4 +204,312 @@
         <tag>NexT主题</tag>
       </tags>
   </entry>
+  <entry>
+    <title>基于Github Pages + NexT主题的个性化配置</title>
+    <url>/personalize-my-site/</url>
+    <content><![CDATA[<blockquote>
+<p>本文详细介绍了Github Pages + Hexo框架 + NexT主题的个性化配置，涉及到网站基本信息、评论系统、Google&#x2F;Bing收录等内容。</p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>书接上文，站点部署完成之后，剩下的重中之重便是网站的配置了。诸如网站基本信息之类的配置，在第一篇博客已经简单介绍，这些配置往往在部署完成之后就会修改，不然无法体现出作者本人的资料，也就谈不上部署完成。剩下的便是很多个性化的配置，这里才是本人以及多数人重点关注的内容，所以单开一篇，记录自己DIY的过程以及一点点心得。</p>
+<span id="more"></span>
+
+<blockquote>
+<p>既面向大众，尽微薄之力；也记录下来，和记忆妥协。（时间久了真的会忘···）</p>
+</blockquote>
+<p>首先重新明确一个前提，使用的是Hexo框架+NexT主题，在本地站点相关的目录下会有两个配置文件<code>_config.yml</code>，其中一个位于init hexo框架的目录下，称之为<strong>站点配置文件</strong>；另一个位于框架目录下的*themes&#x2F;next&#x2F;*目录下，称之为<strong>主题配置文件</strong>。相比之下，<strong>站点配置文件</strong>在外层目录，主题配置文件在内层目录，希望这个描述可以清晰你对配置文件的不同之处，避免混淆。</p>
+<h2 id="配置博客"><a href="#配置博客" class="headerlink" title="配置博客"></a>配置博客</h2><h3 id="总体原则"><a href="#总体原则" class="headerlink" title="总体原则"></a>总体原则</h3><p>配置博客的一个<strong>总体原则就是了解配置文件中各项配置的具体含义，基于自己的理解修改成想要的配置，并善用hexo的本地服务进行调试，灵活修改</strong>。总的来说，是一件耗时且枯燥的工作，所以直接搜索相关的配置博客是一个很好的选择。</p>
+<p>当然，如我这般，搜到的博客都是若干年前发表的，NexT版本的不一致导致很多配置都不能直接适用，所以我只好尽可能的了解各项配置的含义，慢慢完善成自己想要的效果。</p>
+<blockquote>
+<p>如果你如我一般，请参考上面的思路，慢慢配置。</p>
+</blockquote>
+<h3 id="具体配置"><a href="#具体配置" class="headerlink" title="具体配置"></a>具体配置</h3><ul>
+<li><p>取消网站底部的强力驱动字样</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索powered，设为false即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Powered by Hexo &amp; NexT</span></span><br><span class="line"><span class="comment">## 是否显示网站底部的强力驱动字样</span></span><br><span class="line"><span class="attr">powered:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>增加本地搜索功能</p>
+<ul>
+<li>安装插件，执行 <code>npm install hexo-generator-searchdb --save</code></li>
+<li>修改<strong>站点配置文件</strong>，在其最下方新增如下配置</li>
+</ul>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="symbol">search:</span></span><br><span class="line"><span class="symbol">    path:</span> search.xml</span><br><span class="line"><span class="symbol">    field:</span> post</span><br><span class="line"><span class="symbol">    format:</span> html</span><br><span class="line"><span class="symbol">    limit:</span> <span class="number">10000</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>修改<strong>主题配置文件</strong>，启用搜索功能</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Local Search</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/theme-next/hexo-generator-searchdb</span></span><br><span class="line"><span class="attr">local_search:</span></span><br><span class="line">  <span class="comment">## 启用</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 设为auto，输入关键词之后自动显示列表</span></span><br><span class="line">  <span class="comment"># If auto, trigger search by changing input.</span></span><br><span class="line">  <span class="comment">## 设为manual，输入关键词之后回车显示列表</span></span><br><span class="line">  <span class="comment"># If manual, trigger search by pressing enter key or search button.</span></span><br><span class="line">  <span class="attr">trigger:</span> <span class="string">auto</span></span><br><span class="line">  <span class="comment"># Show top n results per article, show all results by setting to -1</span></span><br><span class="line">  <span class="attr">top_n_per_article:</span> <span class="number">-1</span></span><br><span class="line">  <span class="comment"># Unescape html strings to the readable one.</span></span><br><span class="line">  <span class="attr">unescape:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Preload the search data when the page loads.</span></span><br><span class="line">  <span class="comment">## 预加载，打开可能会影响加载速度</span></span><br><span class="line">  <span class="attr">preload:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>题外话：似乎在博客数量上去之后，本地搜索的性能会受到影响，NexT提供了一个三方的搜索服务<code>Algolia Search</code>，但是初期似乎没必要安排上。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>设置侧边栏头像</p>
+<ul>
+<li><p>编辑<strong>主题配置文件</strong>，搜索字段<code>avatar</code></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment">## 设置侧边栏头像</span></span><br><span class="line"><span class="attr">avatar:</span></span><br><span class="line">  <span class="comment"># Replace the default image and set the url here.</span></span><br><span class="line">  <span class="comment">## 选择自己喜欢的图片，保存在相对路径hexo/themes/next/source/images下即可</span></span><br><span class="line">  <span class="attr">url:</span> <span class="string">/images/avatar.gif</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be dispalyed in circle.</span></span><br><span class="line">  <span class="comment">## 设为true，头像会变成圆形，默认是方框</span></span><br><span class="line">  <span class="attr">rounded:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be rotated with the cursor.</span></span><br><span class="line">  <span class="comment">## 设为true，鼠标触碰到时头像框会旋转</span></span><br><span class="line">  <span class="attr">rotated:</span> <span class="literal">false</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>设置网站图标（浏览器标签页显示的小图标）</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索<code>favicon</code>字段</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">favicon:</span><br><span class="line">  <span class="comment">## 主要是这两个，不同尺寸</span></span><br><span class="line">  small: <span class="regexp">/images/</span>favicon-<span class="number">16</span>x16-<span class="keyword">next</span>.png</span><br><span class="line">  medium: <span class="regexp">/images/</span>favicon-<span class="number">32</span>x32-<span class="keyword">next</span>.png</span><br><span class="line">  <span class="comment">## 这两个也做了替换，但没有验证效果</span></span><br><span class="line">  apple_touch_icon: <span class="regexp">/images/</span>apple-touch-icon-<span class="keyword">next</span>.png</span><br><span class="line">  safari_pinned_tab: <span class="regexp">/images/</span>logo.svg</span><br><span class="line">  <span class="comment">#android_manifest: /images/manifest.json</span></span><br><span class="line">  <span class="comment">#ms_browserconfig: /images/browserconfig.xml</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到有不同类型的图标，可以从网站下载或制作自己喜欢的图标，替换对应的源文件即可。（推荐一个图标素材站点：<a href="https://www.iconfont.cn/">iconfont</a>）</p>
+</li>
+</ul>
+</li>
+<li><p>修改文章底部的标签样式，#改为图标</p>
+<ul>
+<li>在<strong>主题配置文件</strong>中搜索<code>tag_icon</code>，将其置为true即可</li>
+</ul>
+</li>
+<li><p>设置建站时间</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索<code>since</code>，取消注释修改其值即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">footer:</span></span><br><span class="line">  <span class="comment"># Specify the date when the site was setup. If not defined, current year will be used.</span></span><br><span class="line">  <span class="attr">since:</span> <span class="number">2023</span></span><br><span class="line">  <span class="string">···</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>首页截断设置</p>
+<ul>
+<li><p>首推的方法是在文章合适的位置手动添加<code>&lt;!-- more --&gt;</code>，这样就可以生成截断效果了</p>
+</li>
+<li><p>在<strong>主题配置文件</strong>中，搜索excerpt_description，实际效果未经过测试</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Automatically excerpt description in homepage as preamble text.</span></span><br><span class="line"><span class="comment">## 首页截断设置，本地实测如果文章中添加了&lt;!-- more --&gt;，这个设为false也不会影响截断效果</span></span><br><span class="line"><span class="attr">excerpt_description:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Read more button</span></span><br><span class="line"><span class="comment"># If true, the read more button will be displayed in excerpt section.</span></span><br><span class="line"><span class="attr">read_more_btn:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>增加代码复制按钮</p>
+<ul>
+<li><p><strong>主题配置文件</strong>中搜索copy_button，设置为true即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">codeblock:</span></span><br><span class="line">  <span class="comment"># Code Highlight theme</span></span><br><span class="line">  <span class="comment"># Available values: normal | night | night eighties | night blue | night bright | solarized | solarized dark | galactic</span></span><br><span class="line">  <span class="comment"># See: https://github.com/chriskempson/tomorrow-theme</span></span><br><span class="line">  <span class="comment">## 选择代码风格</span></span><br><span class="line">  <span class="attr">highlight_theme:</span> <span class="string">normal</span></span><br><span class="line">  <span class="comment"># Add copy button on codeblock</span></span><br><span class="line">  <span class="attr">copy_button:</span></span><br><span class="line">    <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Show text copy result.</span></span><br><span class="line">    <span class="comment">## 显示复制结果</span></span><br><span class="line">    <span class="attr">show_result:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Available values: default | flat | mac</span></span><br><span class="line">    <span class="comment">## 风格，mac风格好像挺奇怪的</span></span><br><span class="line">    <span class="attr">style:</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>这里顺便也贴一下代码风格的设置方法。如上中注释<em>highlight_theme</em></p>
+</li>
+</ul>
+</li>
+<li><p>增加网站访客人数和阅读量</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索busuanzi_count，将其启用</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Show Views / Visitors of the website / page with busuanzi.</span></span><br><span class="line"><span class="comment"># Get more information on http://ibruce.info/2015/04/04/busuanzi</span></span><br><span class="line"><span class="attr">busuanzi_count:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 总访客以及图标</span></span><br><span class="line">  <span class="attr">total_visitors:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_visitors_icon:</span> <span class="string">fa</span> <span class="string">fa-user</span></span><br><span class="line">  <span class="comment">## 总访问次数及图标</span></span><br><span class="line">  <span class="attr">total_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br><span class="line">  <span class="comment">## 文章阅读量及图标</span></span><br><span class="line">  <span class="attr">post_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">post_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br></pre></td></tr></table></figure>
+
+<p>另外，本地验证时发现数字很抽象，部署之后查看会正常。</p>
+<blockquote>
+<p>另外，目前busuanzi还无法重置访客和访问次数</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>永久链接格式</p>
+<ul>
+<li><p>在<strong>站点配置文件</strong>中搜索permalink</p>
+<figure class="highlight elixir"><table><tr><td class="code"><pre><span class="line"><span class="symbol">permalink:</span> <span class="symbol">:title/</span></span><br><span class="line"><span class="symbol">permalink_defaults:</span> <span class="symbol">:year/</span><span class="symbol">:month/</span><span class="symbol">:day/</span><span class="symbol">:title/</span></span><br></pre></td></tr></table></figure>
+
+<p>默认文章的链接是年+月+日+标题的，可以修改成只有标题，似乎这样可以优化<a href="https://www.google.com.hk/search?q=seo%E6%98%AF%E4%BB%80%E4%B9%88&oq=seo&aqs=chrome.1.69i57j0i512j46i340i512l2j69i60l2j69i65j69i61.2595j0j7&sourceid=chrome&ie=UTF-8">SEO</a></p>
+</li>
+</ul>
+</li>
+<li><p>设置页面加载时顶部进度条</p>
+<ul>
+<li><p>在主题配置文件中搜索pace，enable设为true，在theme处选择具体的风格</p>
+<figure class="highlight coq"><table><tr><td class="code"><pre><span class="line">pace:</span><br><span class="line">  enable: true</span><br><span class="line">  # Themes list:</span><br><span class="line">  # big-counter | <span class="type">bounce</span> | <span class="type">barber</span>-shop | <span class="type">center</span>-atom | <span class="type">center</span>-circle | <span class="type">center</span>-radar | <span class="type">center</span>-<span class="built_in">simple</span></span><br><span class="line">  # corner-indicator | <span class="type">fill</span>-<span class="built_in">left</span> | <span class="type">flat</span>-<span class="built_in">top</span> | <span class="type">flash</span> | <span class="type">loading</span>-bar | <span class="type">mac</span>-osx | <span class="type">material</span> | <span class="type">minimal</span></span><br><span class="line">  theme: minimal</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>下载插件，参考<a href="https://github.com/theme-next/theme-next-pace">pace官方</a>执行以下命令：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> themes/next</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">_config.yml  crowdin.yml  docs  gulpfile.js  languages  layout  LICENSE.md  package.json  README.md  scripts  source</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/theme-next/theme-next-pace <span class="built_in">source</span>/lib/pace</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p><strong>Google收录博客网站</strong></p>
+<blockquote>
+<p>一个比较关键的配置。由于依旧是无图模式，所以只能尽可能的用文字描述清楚。且由于时间过的比较久，也无法完全重新跑一次流程，所以有些地方还是有点模糊的。如有问题，<strong>欢迎留言</strong>。</p>
+<p>另外做完这些操作之后，google收录还是会需要两三天的时间，所以再心急也只能安稳等着。</p>
+</blockquote>
+<ul>
+<li><p>查看是否已被收录，在地址栏输入：<code>site:http://xxxx.github.io</code>，如果能显示出自己站点的网页，说明已收录，反之则需要手动提交。</p>
+<blockquote>
+<p>一般新站是不会被收录的，如果不主动提交，理论上有足够多的高质量外链，是有可能被Google主动收录的。</p>
+</blockquote>
+</li>
+<li><p>进入Google Web Master <a href="https://www.google.com/webmasters/tools/home?hl=zh-CN">Search Console</a> 并登录，一般都是谷歌账号直接登录的</p>
+</li>
+<li><p>登陆之后找到添加资源的地方，资源类型选择第二种：<strong>网址前缀</strong></p>
+</li>
+<li><p>输入自己的地址之后点击继续，会弹出一个验证所有权的窗口。<strong>切记不要关闭网页</strong>。</p>
+</li>
+<li><p>验证方法有很多种，这里推荐选择第二种：<strong>HTML标记</strong></p>
+</li>
+<li><p>此方法会给出一串HTML代码，例如：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">&lt;meta name=<span class="string">&quot;google-site-verification&quot;</span> content=<span class="string">&quot;rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg&quot;</span> /&gt;</span><br><span class="line"><span class="regexp">//</span> NOTE: 这是我随机输入的网址生成的标记，请务必使用自己站点生成的代码</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>此时有两种方法：</p>
+<ul>
+<li><p>如果是NexT主题，在<strong>主题配置文件</strong>中搜索<code>google_site_verification</code>，并将HTML代码content的内容填上去。</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="regexp">//</span> 举例！</span><br><span class="line"><span class="comment"># Google Webmaster tools verification.</span></span><br><span class="line"><span class="comment"># See: https://www.google.com/webmasters</span></span><br><span class="line">google_site_verification:rMF1JqbmMsHu2M1zSLQ482HWMOd8u-<span class="number">4</span>z-zWViLWMXHg</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>其他情况，可以手动将改代码添加至swig文件中，打开<em>themes&#x2F;next&#x2F;layout&#x2F;_partials&#x2F;head&#x2F;head.swig</em> 文件，在其中添加生成的代码。我添加在了第二行，如下所示：</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">&lt;meta <span class="attribute">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">&quot;google-site-verification&quot;</span> <span class="attribute">content</span>=<span class="string">&quot;rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg&quot;</span> /&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attribute">content</span>=<span class="string">&quot;width=device-width, initial-scale=1, maximum-scale=2&quot;</span>&gt;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>添加完成之后，需要执行<code>hexo clean &amp;&amp; hexo g -d</code>部署</p>
+</li>
+<li><p>部署完成之后打开博客网站，鼠标右键查看网页源代码，此时在源代码中应该可以搜到我们添加的代码的。</p>
+<blockquote>
+<p>如果没搜到，可以考虑稍作等待，多刷新几次页面，重新查看源代码；或检查上述步骤</p>
+</blockquote>
+</li>
+<li><p>成功搜到之后，回到验证所有权的网页，点击验证。</p>
+</li>
+<li><p>验证成功之后应该就会跳转到控制台的主页啦</p>
+</li>
+</ul>
+</li>
+<li><p>添加站点地图</p>
+<p>添加完谷歌收录之后，紧接着就要上传网站的站点地图。</p>
+<ul>
+<li><p>首先是需要安装插件，在终端执行cmd</p>
+<figure class="highlight ada"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-sitemap <span class="comment">--save</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在<strong>站点配置文件</strong>中，添加如下配置。我是在文件末尾添加的。</p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="meta"># 站点地图</span></span><br><span class="line"><span class="symbol">sitemap:</span></span><br><span class="line"><span class="symbol">    path:</span> sitemap.xml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行<code>hexo clean &amp;&amp; hexo g</code>重新生成后就可以在<code>public</code>目录下看到<code>sitemap.xml</code>文件了。</p>
+</li>
+<li><p>回到<code>Google Search Console</code>，在左侧的菜单中选择站点地图，输入我们生成的站点地图<code>sitemap.xml</code>即可</p>
+<blockquote>
+<p>默认是已经有博客的地址了的，也就是已经显示了**<a href="https://treeknows.github.io/**%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AA%E9%9C%80%E8%A6%81%E5%9C%A8%E8%BE%93%E5%85%A5%E6%A1%86%E4%B8%AD%E8%BE%93%E5%85%A5%60sitemap.xml%60%E5%B9%B6%E7%82%B9%E5%87%BB%E6%8F%90%E4%BA%A4%E5%8D%B3%E5%8F%AF%E3%80%82">https://treeknows.github.io/**，我们只需要在输入框中输入`sitemap.xml`并点击提交即可。</a></p>
+<p>NOTE：刚添加完站点地图，下面的状态显示的可能不是<strong>成功</strong>，同样需要等待数天，才会更新状态。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>谷歌分析</p>
+<blockquote>
+<p>Google Analytics（GA）挺高级的，需要一定的学习成本。如果对站点SEO感兴趣，可以多多学习以下</p>
+</blockquote>
+<ul>
+<li><p>首先要创建账号，前往<a href="https://analytics.google.com/">Google 分析</a>创建账号及媒体资源。</p>
+</li>
+<li><p>没记错的话，用谷歌账号是可以直接登陆的</p>
+</li>
+<li><p>登陆之后创建账号，账号名称没有特别的要求</p>
+</li>
+<li><p>所有都创建完成之后会生成一个<code>衡量 ID</code>，格式如<code>G-8W35JPL36V</code></p>
+</li>
+<li><p>在<strong>主题配置文件</strong>中，搜索<code>google_analytics</code>，并填写上述的ID</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Google Analytics</span></span><br><span class="line"><span class="attr">google_analytics:</span></span><br><span class="line">  <span class="string">//</span> <span class="string">!!!此处填写</span></span><br><span class="line">  <span class="attr">tracking_id:</span> <span class="string">G-8W35JPL36V</span></span><br><span class="line">  <span class="comment"># By default, NexT will load an external gtag.js script on your site.</span></span><br><span class="line">  <span class="comment"># If you only need the pageview feature, set the following option to true to get a better performance.</span></span><br><span class="line">  <span class="attr">only_pageview:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重新生成部署之后应该就可以啦</p>
+</li>
+</ul>
+</li>
+<li><p>Bing收录</p>
+<p>Bing收录的过程类似于Google收录，甚至如果Google收录已经做完，Bing可以直接使用google账号登陆，直接导入Google Search Console的内容，非常方便</p>
+<ul>
+<li>点击<a href="https://www.bing.com/webmasters/home">Bing Webmaster Tools</a>开始提交站点</li>
+<li>忘记是要先登录还是直接可以添加站点了，总之找到添加站点的地方选择<strong>从 GSC 导入你的网站</strong>，之后可能需要验证以下google账号之类的，然后就一键导入了</li>
+<li>记得看下站点地图需不需要手动添加</li>
+</ul>
+<blockquote>
+<p>时间久了导致描述比较模糊，遇到问题可以留言。</p>
+</blockquote>
+</li>
+<li><p>百度收录</p>
+<p>如果没有自己注册域名的话，百度是不可能收录Github Pages的，因为Github把百度的爬虫禁用了，所以如果希望百度可以搜索到自己的博客站点，需要购买域名并和Github Pages绑定一下，详细步骤自行Google。</p>
+<p>对于我来说，添加一个google就足够了，毕竟行业相关，科学上网是难不倒大家的。</p>
+</li>
+<li><p>创建关于我、分类页面</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索<code>menu</code>可以设置站点首页显示的菜单，如下</p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="symbol">menu:</span></span><br><span class="line"><span class="symbol">  home:</span> / || fa fa-home</span><br><span class="line">  <span class="meta">#tags: /tags/ || fa fa-tags</span></span><br><span class="line"><span class="symbol">  archives:</span> <span class="keyword">/archives/</span> || fa fa-archive</span><br><span class="line"><span class="symbol">  categories:</span> <span class="keyword">/categories/</span> || fa fa-th</span><br><span class="line"><span class="symbol">  about:</span> <span class="keyword">/about/</span> || fa fa-user</span><br><span class="line">  <span class="meta">#schedule: /schedule/ || fa fa-calendar</span></span><br><span class="line">  <span class="meta">#sitemap: /sitemap.xml || fa fa-sitemap</span></span><br><span class="line">  <span class="meta">#commonweal: /404/ || fa fa-heartbeat</span></span><br></pre></td></tr></table></figure>
+
+<p>我这边打开了<strong>分类</strong>和<strong>关于</strong>两个界面，此时本地验证的话，可以发现首页已经有相关的菜单栏，但是点进去会报<code>not found</code>，需要我们手动创建相关的页面。</p>
+</li>
+<li><p>在hexo目录下，打开终端，执行以下命令</p>
+<figure class="highlight haxe"><table><tr><td class="code"><pre><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> categories</span><br><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> about</span><br></pre></td></tr></table></figure>
+
+<p>执行之后，会在<em>hexo&#x2F;source&#x2F;<em>目录下生成两个新的目录</em>about</em>和<em>categories</em>，两个目录下都会生成一个<code>index.md</code>文件，这个便是我们的页面了</p>
+</li>
+<li><p><em>categories</em>目录下的<code>index.md</code>只需要修改类型即可，其内容会根据我们每篇博客中设定的分类自动生成</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment">#title: Blog Categories</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:36:03</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><em>about</em>目录下的<code>index.md</code>除了需要修改类型，还需要我们手动添加内容，就像写一篇博客一样。</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">About</span> <span class="string">Me</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:35:50</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="string">CONTENT</span></span><br><span class="line"><span class="string">······</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>添加评论系统 <code>Gitalk</code></p>
+<ul>
+<li><p>登录 <strong>Github</strong> ，右键头像，在下拉菜单中，选择“<strong>Settings</strong>”选项</p>
+</li>
+<li><p>在左侧菜单选择“<strong>Developer settings</strong>”选项，进入开发者页面</p>
+</li>
+<li><p>选择 <strong>OAuth Apps</strong> ，并点击“<strong>New OAuth App</strong>”创建新授权应用</p>
+</li>
+<li><p>设置该应用相关信息，其中</p>
+<ul>
+<li>Application name为应用名称，如<code>博客评论</code></li>
+<li>Homepage URL为博客主页，需要和自己的博客一致</li>
+<li>Authorization callback URL 授权回调页面（同 Homepage URL）</li>
+</ul>
+</li>
+<li><p>点击创建应用，进入新的页面</p>
+</li>
+<li><p>在新页面的<strong>Clients secrets</strong>处，点击<code>Generate a new client secret</code>，可能需要验证密码才能生成。</p>
+</li>
+<li><p>保存生成的client secret和 client id，后续要用到</p>
+</li>
+<li><p>在<strong>主题配置文件</strong>中搜索<code>gitalk</code>，配置如下：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Gitalk</span></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="regexp">//</span> 启用</span><br><span class="line">  enable: true</span><br><span class="line">  <span class="regexp">//</span> github用户名</span><br><span class="line">  github_id: treeknows</span><br><span class="line">  <span class="regexp">//</span> 在哪个仓库下，推荐博客所在的仓库</span><br><span class="line">  repo: treeknows.github.io</span><br><span class="line">  <span class="regexp">//</span> 刚刚保存的ID</span><br><span class="line">  client_id: <span class="number">22</span>fb59ff85c3aef2677a</span><br><span class="line">  <span class="regexp">//</span> 刚刚生成的secret</span><br><span class="line">  client_secret: <span class="number">246142</span>feb132313b08ee3ff55678c88244b67b97</span><br><span class="line">  <span class="regexp">//</span> Github用户名</span><br><span class="line">  admin_user: treeknows</span><br><span class="line">  <span class="comment">## 点击评论框时会不会变黑，说实话true了不太好看</span></span><br><span class="line">  distraction_free_mode: false <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk&#x27;s display language depends on user&#x27;s browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language:</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>参考注释进行配置。选择<code>repo</code>时要注意，<code>repo</code>应该是public的，否则评论是无法使用的。这也就是为什么在第一篇博客中，推荐将博客所在的仓库设为public而不是private，就是为了此时的方便。</p>
+</li>
+<li><p>在<strong>主题配置文件</strong>中，搜索<code>comments</code>，激活gitalk</p>
+<figure class="highlight nestedtext"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line"><span class="attribute">comments</span><span class="punctuation">:</span></span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  <span class="attribute">style</span><span class="punctuation">:</span> <span class="string">tabs</span></span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  <span class="attribute">// !!! 选择gitalk</span></span><br><span class="line"><span class="attribute">  active</span><span class="punctuation">:</span> <span class="string">gitalk</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行<code>hexo clean &amp;&amp; hexo g -d</code>重新生成并部署，打开博客选择一篇文章查看效果。</p>
+</li>
+<li><p>注意，第一次使用评论系统是需要进行一个初始化的，似乎只需要验证一下github账号即可，比较简单。在之后的post了新文章后，自测是不需要再次手动初始化的。（但是网上说依旧需要手动初始化😶</p>
+</li>
+</ul>
+</li>
+<li><p>增加版权信息</p>
+<ul>
+<li><p>在<strong>主题配置文件</strong>中搜索<code>creative_commons</code></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">creative_commons:</span></span><br><span class="line">  <span class="attr">license:</span> <span class="string">by-nc-sa</span></span><br><span class="line">  <span class="comment">## 在侧边栏显示一个协议的图标</span></span><br><span class="line">  <span class="attr">sidebar:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment">## 文章底部显示版权信息</span></span><br><span class="line">  <span class="attr">post:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">language:</span></span><br></pre></td></tr></table></figure>
+
+<p>将<code>post</code>设置为true，重新生成即可。</p>
+</li>
+</ul>
+</li>
+<li><p>图床选择</p>
+<ul>
+<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的博客，迫使自己尽快掌握图床的使用🤡</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到这里，配置相关的介绍基本就结束了，可能会有一些没有涉及到的小修改，可以参考我博客源码中的配置文件：<a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/_config.yml">站点配置文件</a> &amp; <a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/themes/next/_config.yml">主题配置文件</a>，里面会有一部分的中文注释，帮助理解。</p>
+<p>另外，如果觉得我的博客风格还不错，又不想浪费过多的时间配置，似乎可以直接clone我的<a href="https://github.com/treeknows/treeknows.github.io.git">博客源码</a>，修改一些关键信息为自己的信息，实现极速建站。</p>
+<p>大致需要的步骤可能为：</p>
+<ol>
+<li>Fork我的仓库</li>
+<li>修改仓库名字为自己的<code>username.github.io</code></li>
+<li>clone到本地</li>
+<li>修改<strong>站点配置文件</strong>中部署相关的的配置，搜索<code>deploy</code></li>
+<li>修改基本信息，如网站title、头像之类的</li>
+<li>删除我为数不多的博客</li>
+<li>GA &amp; Gitalk等换成自己的id</li>
+<li>提交自己新的站点到Google Search Console</li>
+<li>尝试部署</li>
+</ol>
+<p>只脑补到这些，未经验证，不包成功哈🙄</p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>Github Pages</tag>
+        <tag>Hexo</tag>
+        <tag>NexT主题</tag>
+      </tags>
+  </entry>
 </search>
