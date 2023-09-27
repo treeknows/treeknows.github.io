@@ -173,6 +173,12 @@ v8: 10.2.154.26-node.25
 
 是的，执行`npx hexo`而不是`hexo`
 
+> 2023.09.28更新：
+>
+> Windows下想要直接执行`hexo`需要手动添加环境变量。
+>
+> 相对路径为：BLOG_DIR\hexo\node_modules\.bin
+
 #### 主题安装
 
 万事俱备，只欠安装。
