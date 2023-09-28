@@ -1,17 +1,17 @@
 ---
 title: 【CG学习笔记】Overview of Computer Graphics
-date: 2023-05-10 00:33:49
 tags:
 - Study Notes
 - Computer Graphics
 categories:
 - 学习笔记
 comment: true
+
 ---
 
 >  开始自学计算机图形学，学习视频来自B站[GAMES101-现代计算机图形学入门-闫令琪](https://www.bilibili.com/video/BV1X7411F744?p=1)
 >
-> 本文仅为个人笔记
+>  本文仅为个人笔记
 
 ## 导航
 
@@ -30,6 +30,7 @@ comment: true
 ### Why study Computer Graphics?
 
 - 这部分最后总结的一句话很nice：
+
   - Computer Graphics is **AWESOME**!
 
 - 什么是好的画面：
