@@ -1017,3 +1017,26 @@ images: images
 
 passage_end_tag:
   enabled: true
+
+# Darkmode JS
+# For more information: https://github.com/rqh656418510/hexo-next-darkmode, https://github.com/sandoche/Darkmode.js
+darkmode_js:
+  enable: true
+  ## 距离底部的距离
+  bottom: '32px' # default: '32px'
+  ## 距离右边的距离
+  right: '32px' # default: '32px'
+  left: 'unset' # default: 'unset'
+  time: '0.5s' # default: '0.3s'
+  mixColor: 'transparent' # default: '#fff'
+  backgroundColor: 'transparent' # default: '#fff'
+  buttonColorDark: '#100f2c' # default: '#100f2c'
+  buttonColorLight: '#fff' # default: '#fff'
+  ## 默认激活
+  isActivated: false # default false
+  ## 保存状态到cookies
+  saveInCookies: true # default: true
+  label: '🌓' # default: ''
+  ## 自动匹配系统主题
+  autoMatchOsTheme: true # default: true
+  libUrl: # Set custom library cdn url for Darkmode.js

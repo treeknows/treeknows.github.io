@@ -499,6 +499,56 @@ comments: true
 - 图床选择
 
   - 把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于**图床的使用**的博客，迫使自己尽快掌握图床的使用🤡
+  
+- 添加深色模式 - update on 2023.10.17
+
+  - NexT 8.x原生已经支持暗黑模式，需要在**主题配置文件**中搜索`darkmode`，设置为true即可。但是这种配置方式没有切换按钮，默认根据系统偏好决定是否启动暗黑模式。
+
+  - NexT 7.x / 8.x 自动添加可切换的深色模式
+
+    - 安装`hexo-next-darkmode`插件
+
+    ```
+    npm install hexo-next-darkmode --save
+    ```
+
+    - 配置Hexo插件，在**主题配置文件**中，添加如下内容：
+
+    ```
+    # Darkmode JS
+    # For more information: https://github.com/rqh656418510/hexo-next-darkmode, https://github.com/sandoche/Darkmode.js
+    darkmode_js:
+      enable: true
+      ## 距离底部的距离
+      bottom: '32px' # default: '32px'
+      ## 距离右边的距离
+      right: '32px' # default: '32px'
+      left: 'unset' # default: 'unset'
+      time: '0.5s' # default: '0.3s'
+      mixColor: 'transparent' # default: '#fff'
+      backgroundColor: 'transparent' # default: '#fff'
+      buttonColorDark: '#100f2c' # default: '#100f2c'
+      buttonColorLight: '#fff' # default: '#fff'
+      ## 默认激活
+      isActivated: false # default false
+      ## 保存状态到cookies
+      saveInCookies: true # default: true
+      label: '🌓' # default: ''
+      ## 自动匹配系统主题
+      autoMatchOsTheme: true # default: true
+      libUrl: # Set custom library cdn url for Darkmode.js
+    ```
+
+    > `isActivated: true`：默认激活暗黑/夜间模式，请始终与 `saveInCookies: false`、`autoMatchOsTheme: false` 一起使用
+
+    - 确保NexT原生的`darkmode`选项设置为`false`
+
+    效果展示：
+
+    ![暗黑模式效果展示](https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG)
+
+    > 深色模式参考博客：https://blog.csdn.net/rqh656418510/article/details/123676457
+
 
 ## 总结
 
