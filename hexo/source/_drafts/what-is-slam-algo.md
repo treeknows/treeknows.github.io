@@ -24,6 +24,8 @@ SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步
 
 定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。
 
+<!-- more -->
+
 因此，SLAM算法的目标可以总结为：**在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位**。
 
 
@@ -47,7 +49,19 @@ SLAM算法的工作内容，可以形象的描述为：
 
 VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己在空间中的哪个位置，我在哪里（移动位置x,y,z），我在看哪个方向（旋转角度），同时建图以确定周边的环境是什么样子的。
 
+#### 定位
+
 在VR中，SLAM算法的输出就是**6DOF**(degree of freedom)，即orientation + position。其实这个6DOF指的头6，在VR中还有手6DOF和物体6DOF的概念。
+
+#### 建图
+
+ SLAM建立的地图可以分为三种：
+
+- 稀疏地图
+- 稠密地图
+- 语义地图
+
+![slam_map_result](https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png)
 
 ## SLAM业务图
 
@@ -95,14 +109,13 @@ VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己�
 - SLAM双目匹配，以及手柄、手势的主要活动区域，基本是以下面两个相机为主
 - 四目相机和IMU之间要保证刚性连接，否则一旦发生位移，就需要重新标定
 
-
-
 ### 6DOF标定
 
+![purpose_of_calibration_result](https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png) 
 
+重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。
 
 ### 业务架构
-
 
 ### SLAM算法
 
