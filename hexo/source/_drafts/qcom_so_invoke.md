@@ -1,3 +1,10 @@
+---
+title: so库预置
+tags:
+---
+
+
+
 ### 高通平台现状
 
 高通把QVR相关的bin和so都放在了vendor目录下，如`qvrservice`、`libqvrservice.so`等，同样的，对于`qvrservice`涉及到的client端的实现也放在了vendor目录。
@@ -11,7 +18,7 @@
 
 #### 适配新变化
 
-同时，为了适配Android12的安全策略，高通在SXR SDK 4.0.6版本以及后续的OpenXR SDK新增了一些so和头文件
+为了适配Android12的安全策略，高通在SXR SDK 4.0.6版本以及后续的OpenXR SDK新增了一些so和头文件
 
 - `libqxrcoreclient.so`
 - `libqxrcamclient.so`
