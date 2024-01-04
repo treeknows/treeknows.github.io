@@ -291,7 +291,7 @@
 <p>定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。</p>
 <span id="more"></span>
 <p>因此，SLAM算法的目标可以总结为：<strong>在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位</strong>。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt="SLAM目标"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt=""></p>
 <p>SLAM算法的工作内容，可以形象的描述为：</p>
 <p>当我们进入一个未知的环境时，</p>
 <ol>
@@ -312,7 +312,7 @@
 <li>稠密地图</li>
 <li>语义地图</li>
 </ul>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt="slam_map_result"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt=""></p>
 <h2 id="SLAM-Overview">SLAM Overview</h2>
 <h3 id="硬件方案">硬件方案</h3>
 <h4 id="6DOF的硬件方案：Inside-Out和Outside-In">6DOF的硬件方案：Inside-Out和Outside-In</h4>
@@ -439,7 +439,7 @@
 </tbody>
 </table>
 <h4 id="SLAM硬件：摆放要求">SLAM硬件：摆放要求</h4>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt="camera_place"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt=""></p>
 <ul>
 <li>下面两个相机是主相机，需要下偏，确保充足的双目重叠</li>
 <li>上面两个相机是辅相机，上偏，扩大跟踪FOV的同时兼顾前方盲区深度</li>
@@ -449,10 +449,10 @@
 <h3 id="6DOF标定">6DOF标定</h3>
 <h4 id="标定的目的">标定的目的</h4>
 <p>拿拍照来讲，拍照即为将三维的场景通过某种变换得到一张二维的照片，标定的目的就在于计算出一个数学模型，从而使得通过该数学模型，能够由二维的照片反推出三维的场景。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt="purpose_of_calibration_result"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt=""></p>
 <h4 id="标定的好坏">标定的好坏</h4>
 <p>重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt="reprojection_error_result"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt=""></p>
 <p>图中<strong>e</strong>即为计算得到的重投影误差值</p>
 <h3 id="SLAM算法模块">SLAM算法模块</h3>
 <ul>
@@ -476,13 +476,13 @@
 <p>前台线程接收传感器数据，进行SLAM初始化和特征跟踪与位姿实时求解，并输出设备实时位姿和三维点云。</p>
 <p>后台线程进行局部或全局优化，减少误差累积；进行场景回路检测，并支持场景重定位。</p>
 <h3 id="SLAM业务架构">SLAM业务架构</h3>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt="SLAM_ARCH"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt=""></p>
 <p>在当前主流的解决方案中，VR Service是比较重要的一个模块。比如高通的QVRService，QVR负责接收sensor的数据，并交由DSP上的SLAM算法做融合，生成的6DOF pose通过QVR传递给SDK/APP端。</p>
 <h3 id="SLAM轨迹误差">SLAM轨迹误差</h3>
 <p>绝对轨迹误差：真实轨迹点和估计轨迹点之间的差值</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt="ads_pose_error"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt=""></p>
 <p>相对轨迹误差：位姿变化量的插值</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt="relative_pose_error"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt=""></p>
 <h3 id="SLAM性能指标">SLAM性能指标</h3>
 <table>
 <thead>
@@ -540,16 +540,16 @@
 <p>常常被简写为3DR，全称为<strong>3D Reconstruction</strong>，其主要目的为实现更好的交互。</p>
 <h3 id="基本流程">基本流程</h3>
 <p>稀疏点云重建—&gt;稠密点云重建—&gt;点云网格重建—&gt;三维语义重建</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt="3DR_process"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt=""></p>
 <p>3DR的实现依赖于很多算法，如场景理解、语义分割、目标识别、位姿估计等</p>
 <h3 id="3DR框架">3DR框架</h3>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt="3DR_framework"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt=""></p>
 <p>当前还处于1.0时代，有了平面检测，但是也只是平面的检测，而不是桌面的检测或地面的检测或具体的物体平面。</p>
 <h2 id="后记">后记</h2>
 <p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
 <hr>
 <blockquote>
-<p>总的来讲，行文断断续续，越断越爽，越续越差。:expressionless:</p>
+<p>总的来讲，行文断断续续，越断越爽，越续越差。😑</p>
 </blockquote>
 
     </div>

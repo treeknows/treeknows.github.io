@@ -46,11 +46,11 @@
 <p>Michael Abrash（作者本人）在其 2013 年的博文（原文中贴的链接已失效）中详细介绍了抖动及其后果。阅读迈克尔关于抖动的笔记将有助于您更好地理解本篇文章。</p>
 <blockquote>
 <p>In order to produce a perceptually correct representation of the virtual world, the images on the displays must be updated with every vsync refresh. However, if rendering takes too long, a frame will be missed, resulting in judder. This is because when no new frame has been rendered, the video adapter scans out the same image a second time. Here is what an object location looks like if the same rendered frame is displayed two frames in a row before updating:</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt=""></p>
 <p><em>Here, the eye is rotating to the left. When the same image is displayed again, its light falls on a different part of the retina, resulting in double image judder.</em></p>
 </blockquote>
 <p>为了在虚拟世界呈现正确的感知，屏幕图像必须在每次VSync时刷新。然而，如果渲染耗费太长时间，就会错过一帧，这就导致了抖动。这是因为当没有渲染新的帧时，视频适配器对同一张图像进行了二次扫描。在更新前连续显示同一渲染帧时，对象位置的情况如下图所示：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt=""></p>
 <p><em>在这里，眼睛向左旋转。当再次显示同一图像时，光线落在视网膜的不同部分，导致重影抖动。</em></p>
 <blockquote>
 <p>Of course, doubling is not the only possible effect. If we displayed the same frame three times in a row, you would get a triple image on your retina and so on.</p>
@@ -72,11 +72,11 @@
 <blockquote>
 <p><strong>Positional Judder</strong></p>
 <p>Positional judder is one of the most obvious artifacts with orientation-only timewarp. When you move your head, only the additional rotational component is reflected in the ATW-generated images, while any translational head movement since the frame was rendered is ignored. This means that as you move your head from side to side, or even just rotate your head which translates your eyes, you will see multiple-image judder on objects that are close to you. The effect is very noticeable in spaces with near field objects, such as the submarine screenshot below.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt=""></p>
 </blockquote>
 <p><strong>位置抖动</strong></p>
 <p>位置抖动是基于方向的时间扭曲带来的最明显的瑕疵之一。当移动头部时，只有额外的旋转部分会反映在ATW生成的图像中，而自帧被渲染以来的所有头部平移都会被忽略。这就意味着当左右移动头部，甚至只是旋转头部使眼睛平移时，将在靠近的物体上观察到多重图像抖动。这种效果在有近场物体时非常明显，例如下面的潜艇截图：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt=""></p>
 <blockquote>
 <p>So, how bad is this effect?</p>
 <p>The magnitude of positional judder depends on the environment the player is in and the types of movements they make. If you keep your head relatively still and only look around at the scenery, the positional error will be small and the judder will not be very noticeable.</p>
@@ -102,12 +102,12 @@
 <blockquote>
 <p><strong>Moving and Animated Objects</strong></p>
 <p>Animated or moving objects cause another artifact with ATW: because a new image is generated just by warping the original image without knowledge of the movement of objects, for all ATW-generated frames they are effectively frozen in time. This artifact manifests as multiple images of these moving objects — i.e. judder.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt=""></p>
 <center>Image of scene with a moving object affected by judder.</center>
 </blockquote>
 <p><strong>移动和动画物体</strong></p>
 <p>动画或移动中的物体导致了另一个ATW中的瑕疵：由于新图像是在不知道物体移动的情况下通过扭曲原始图像生成的，因此在所有ATW生成的帧中，这些物体实际上都被冻结在时间中。这种伪像表现为这些移动物体的多幅图像，即抖动。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt=""></p>
 <center>Image of scene with a moving object affected by judder.</center>
 <blockquote>
 <p>The impact of this artifact depends on the number, projected area, and speed of animated objects in the game scene: if the number or size of moving objects is small or they are not moving fast, the multiple images may not be particularly noticeable. However, when moving objects or animation covers a large portion of the screen it can be disturbing.</p>
@@ -118,13 +118,13 @@
 <blockquote>
 <p><strong>Specular and Reflection</strong></p>
 <p>Calculations for reflections and specular lighting consider the direction of the eye vector, or rendering camera vector, to produce an image that is custom rendered for each eye.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt=""></p>
 </blockquote>
 <p><strong>镜面反射</strong></p>
 <p>计算镜面反射需考虑眼睛的方向， 或摄像机（Unity里的camera？）的方向， 由此为每只眼睛生成一张定制的渲染画面。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt=""></p>
 <blockquote>
 <p><em>Diagrams courtesy of Wikipedia and <a href="http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html">http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html</a> respectively.</em></p>
 <p>Since this eye vector changes with head movement, specular and reflection rendering is no longer correct after timewarp. This may result in reflections and specular highlights juddering.</p>
@@ -154,7 +154,7 @@
 <p>What we really want is for ATW to run consistently shortly before the video card flips to a new frame for scan-out, with just enough time to complete the generation of the new timewarped frame. Short of having custom vsync-triggered ATW interrupt routines, we can achieve this with high-priority preemption granularity and scheduling of around 2ms or less.</p>
 </blockquote>
 <p>然而，11ms实际上还不够好：如果ATW在一帧内随机的时间点开始运行，其延迟(执行和帧扫描之间的时间间隔)也将是随机的。而且，我们需要确保不会调过任何游戏渲染的帧。</p>
-<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 :sweat_smile:）</p>
+<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 😅）</p>
 <blockquote>
 <p>It turns out that 2ms preemption on general rendering is a tall order for modern video cards and driver implementations. Although many GPUs support limited forms of preemption, the implementation varies significantly:</p>
 <ul>
@@ -248,91 +248,6 @@
       <tags>
         <tag>Android Framework</tag>
         <tag>经验</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Github + PicGo + Typora搭建图床</title>
-    <url>/how-to-insert-image-into-blog/</url>
-    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
-<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
-<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
-<span id="more"></span>
-<h2 id="Github">Github</h2>
-<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
-<h2 id="PicGo">PicGo</h2>
-<h3 id="下载">下载</h3>
-<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
-<h3 id="配置">配置</h3>
-<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
-<ul>
-<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
-<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
-<li>Token：需要手动创建
-<ul>
-<li>打开Settings</li>
-<li>左侧菜单最下面点击<code>Developer settings</code></li>
-<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
-<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
-<li>将生成的token复制到PicGo的设置里</li>
-</ul>
-</li>
-</ul>
-<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
-<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
-<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
-<p>参考设置如图：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
-<h2 id="Typora">Typora</h2>
-<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
-<p>配置过程为：</p>
-<ul>
-<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
-<li>如下图所示，依次设置：
-<ul>
-<li>图片存储方式：上传图片</li>
-<li>PicGo路径：选择为PicGo的安装路径</li>
-<li>点击<strong>验证图片上传选项</strong></li>
-</ul>
-</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
-<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
-<p>此时就可以直接复制图片到Typora了。</p>
-<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
-<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
-<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
-<blockquote>
-<p><s><strong>使用Typora</strong></s><br>
-<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
-<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
-</blockquote>
-<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
-<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
-<blockquote>
-<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
-</blockquote>
-<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
-<ul>
-<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
-</ul>
-<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
-<p><strong>解决</strong>：修改hosts文件</p>
-<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
-<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></table></figure>
-<p>重启Typora即可。</p>
-<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
-<h2 id="参考">参考</h2>
-<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
-<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>经验</tag>
-        <tag>PicGo</tag>
-        <tag>图床搭建</tag>
       </tags>
   </entry>
   <entry>
@@ -552,289 +467,6 @@
         <tag>Github Pages</tag>
         <tag>Hexo</tag>
         <tag>NexT主题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>认识SLAM算法</title>
-    <url>/what-is-slam-algo/</url>
-    <content><![CDATA[<h2 id="前言">前言</h2>
-<p>因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。</p>
-<h2 id="什么是SLAM算法">什么是SLAM算法</h2>
-<p>SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：</p>
-<ul>
-<li>定位</li>
-<li>建图</li>
-</ul>
-<p>定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。</p>
-<span id="more"></span>
-<p>因此，SLAM算法的目标可以总结为：<strong>在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位</strong>。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt="SLAM目标"></p>
-<p>SLAM算法的工作内容，可以形象的描述为：</p>
-<p>当我们进入一个未知的环境时，</p>
-<ol>
-<li>特征标记：用”眼睛“观察周围地标，并记住他们的特征。</li>
-<li>在自己的”脑海“中，根据双眼获得的信息，把特征地标在三维地图中重建出来。</li>
-<li>当自己在行走时，不断获取新的特征地标，并且校正头脑中的地图模型。</li>
-<li>根据自己前一段时间行走获得的地表特征，确定自己的位置。</li>
-</ol>
-<p>在此过程中，定位和建图是同时进行的。</p>
-<h3 id="VR中的SLAM">VR中的SLAM</h3>
-<p>VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己在空间中的哪个位置，我在哪里（移动位置x,y,z），我在看哪个方向（旋转角度），同时建图以确定周边的环境是什么样子的。</p>
-<h4 id="定位">定位</h4>
-<p>在VR中，SLAM算法的输出就是<strong>6DOF</strong>(degree of freedom)，即orientation + position。其实这个6DOF指的头6，在VR中还有手6DOF和物体6DOF的概念。</p>
-<h4 id="建图">建图</h4>
-<p>SLAM建立的地图可以分为三种：</p>
-<ul>
-<li>稀疏地图</li>
-<li>稠密地图</li>
-<li>语义地图</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt="slam_map_result"></p>
-<h2 id="SLAM-Overview">SLAM Overview</h2>
-<h3 id="硬件方案">硬件方案</h3>
-<h4 id="6DOF的硬件方案：Inside-Out和Outside-In">6DOF的硬件方案：Inside-Out和Outside-In</h4>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">方案</th>
-<th style="text-align:left">Outside-in 外向内</th>
-<th>Inside-out 内向外</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">原理</td>
-<td style="text-align:left">基于标记，需要固定在外部的追踪设备</td>
-<td>基于无标记，只需VR上的摄像头，使用SLAM算法</td>
-</tr>
-<tr>
-<td style="text-align:center">追踪精度</td>
-<td style="text-align:left">精度高，小于1mm</td>
-<td>精度略低</td>
-</tr>
-<tr>
-<td style="text-align:center">可移动范围</td>
-<td style="text-align:left">仅限于传感器监测范围</td>
-<td>移动范围无限制</td>
-</tr>
-<tr>
-<td style="text-align:center">跟踪死角</td>
-<td style="text-align:left">正常几乎无死角</td>
-<td>有跟踪死角</td>
-</tr>
-<tr>
-<td style="text-align:center">延迟</td>
-<td style="text-align:left">延迟相对少</td>
-<td>有一定延迟</td>
-</tr>
-<tr>
-<td style="text-align:center">抗遮挡</td>
-<td style="text-align:left">易受遮挡影响</td>
-<td>无遮挡问题</td>
-</tr>
-<tr>
-<td style="text-align:center">事前环境准备</td>
-<td style="text-align:left">需要</td>
-<td>不需要</td>
-</tr>
-</tbody>
-</table>
-<h4 id="SLAM硬件：相机">SLAM硬件：相机</h4>
-<table>
-<thead>
-<tr>
-<th>单目相机</th>
-<th>双目相机</th>
-<th>RGB-D相机</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>成本低</td>
-<td>计算深度</td>
-<td>主动测深度</td>
-</tr>
-<tr>
-<td>距离不受限</td>
-<td>距离不受限</td>
-<td>重建效果好</td>
-</tr>
-<tr>
-<td>尺度不确定性</td>
-<td>配置复杂</td>
-<td>测量范围小</td>
-</tr>
-<tr>
-<td>初始化问题</td>
-<td>计算量大</td>
-<td>受日光和材质干扰</td>
-</tr>
-</tbody>
-</table>
-<h4 id="SLAM硬件：-IMU">SLAM硬件： IMU</h4>
-<table>
-<thead>
-<tr>
-<th>加速计</th>
-<th>陀螺仪</th>
-<th>磁力计</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>检测物体在载体坐标系统独立三轴的加速度信号，对单方向加速度积分即可得到方向速度</td>
-<td>检测载体相对于导航坐标系的角速度信号</td>
-<td>检测载体相对于地球磁场的东南西北方向信号</td>
-</tr>
-<tr>
-<td>”我们又前进了几米“</td>
-<td>”我们转了几圈“</td>
-<td>”我们向西偏北方向“</td>
-</tr>
-</tbody>
-</table>
-<h4 id="SLAM硬件：相机和IMU互补">SLAM硬件：相机和IMU互补</h4>
-<table>
-<thead>
-<tr>
-<th>方案</th>
-<th>IMU</th>
-<th>Camera</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>优势</td>
-<td>快速响应<br />不受成像质量影响<br />角速度普遍比较准确</td>
-<td>不产生漂移</td>
-</tr>
-<tr>
-<td>劣势</td>
-<td>存在零偏<br />低精度IMU积分位姿发散</td>
-<td>受图像遮挡、运动物体干扰<br />快速移动时易丢失</td>
-</tr>
-</tbody>
-</table>
-<h4 id="SLAM硬件：摆放要求">SLAM硬件：摆放要求</h4>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt="camera_place"></p>
-<ul>
-<li>下面两个相机是主相机，需要下偏，确保充足的双目重叠</li>
-<li>上面两个相机是辅相机，上偏，扩大跟踪FOV的同时兼顾前方盲区深度</li>
-<li>SLAM双目匹配，以及手柄、手势的主要活动区域，基本是以下面两个相机为主</li>
-<li>四目相机和IMU之间要保证刚性连接，否则一旦发生位移，就需要重新标定</li>
-</ul>
-<h3 id="6DOF标定">6DOF标定</h3>
-<h4 id="标定的目的">标定的目的</h4>
-<p>拿拍照来讲，拍照即为将三维的场景通过某种变换得到一张二维的照片，标定的目的就在于计算出一个数学模型，从而使得通过该数学模型，能够由二维的照片反推出三维的场景。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt="purpose_of_calibration_result"></p>
-<h4 id="标定的好坏">标定的好坏</h4>
-<p>重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt="reprojection_error_result"></p>
-<p>图中<strong>e</strong>即为计算得到的重投影误差值</p>
-<h3 id="SLAM算法模块">SLAM算法模块</h3>
-<ul>
-<li>
-<p>传感器模块：数据采集</p>
-</li>
-<li>
-<p>视觉里程计模块：特征匹配</p>
-</li>
-<li>
-<p>后端模块：消除视觉里程计累计误差</p>
-</li>
-<li>
-<p>地图模块：构建三维地图</p>
-</li>
-<li>
-<p>回环检测模块：空间积累误差消除</p>
-</li>
-</ul>
-<p>SLAM系统可以分为前台线程和后台线程，其中：</p>
-<p>前台线程接收传感器数据，进行SLAM初始化和特征跟踪与位姿实时求解，并输出设备实时位姿和三维点云。</p>
-<p>后台线程进行局部或全局优化，减少误差累积；进行场景回路检测，并支持场景重定位。</p>
-<h3 id="SLAM业务架构">SLAM业务架构</h3>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt="SLAM_ARCH"></p>
-<p>在当前主流的解决方案中，VR Service是比较重要的一个模块。比如高通的QVRService，QVR负责接收sensor的数据，并交由DSP上的SLAM算法做融合，生成的6DOF pose通过QVR传递给SDK/APP端。</p>
-<h3 id="SLAM轨迹误差">SLAM轨迹误差</h3>
-<p>绝对轨迹误差：真实轨迹点和估计轨迹点之间的差值</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt="ads_pose_error"></p>
-<p>相对轨迹误差：位姿变化量的插值</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt="relative_pose_error"></p>
-<h3 id="SLAM性能指标">SLAM性能指标</h3>
-<table>
-<thead>
-<tr>
-<th>绝对位姿误差</th>
-<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br />最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>相对位姿误差</td>
-<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br />最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
-</tr>
-<tr>
-<td>漂移/draft</td>
-<td>无漂移，出现漂移，精度会非常差</td>
-</tr>
-<tr>
-<td>抖动/jitter</td>
-<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br />最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
-</tr>
-<tr>
-<td>延迟</td>
-<td>延迟 &lt; 5ms</td>
-</tr>
-<tr>
-<td>重定位</td>
-<td>重定位时间 &lt; 1s，位置精度 &lt; 1cm</td>
-</tr>
-<tr>
-<td>追踪范围</td>
-<td>追踪范围 &lt; 10m * 10m</td>
-</tr>
-<tr>
-<td>光照敏感性</td>
-<td>明亮、灰暗、漆黑</td>
-</tr>
-<tr>
-<td>纹理敏感性</td>
-<td>高纹理、低纹理、无纹理</td>
-</tr>
-<tr>
-<td>跟踪敏感性</td>
-<td>位姿多变、快速距离切换、移动物体背景、传感器短暂失效</td>
-</tr>
-</tbody>
-</table>
-<h2 id="Video-See-Through">Video See Through</h2>
-<p>AR/VR显示技术可以分为OST和VST</p>
-<ul>
-<li>OST：光学透视，真实世界通过放置在用户眼前的半透明光学合成器看到的，同时光学合成器也被用来将计算机生成的图像反射到用户的眼睛里，从而将真实世界和虚拟世界结合起来。</li>
-<li>VST：视频透视，通过相机实时捕捉真实画面，再和虚拟世界该呈现的画面融合，最终呈现在显示屏幕上。</li>
-</ul>
-<h2 id="三维重建">三维重建</h2>
-<p>常常被简写为3DR，全称为<strong>3D Reconstruction</strong>，其主要目的为实现更好的交互。</p>
-<h3 id="基本流程">基本流程</h3>
-<p>稀疏点云重建—&gt;稠密点云重建—&gt;点云网格重建—&gt;三维语义重建</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt="3DR_process"></p>
-<p>3DR的实现依赖于很多算法，如场景理解、语义分割、目标识别、位姿估计等</p>
-<h3 id="3DR框架">3DR框架</h3>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt="3DR_framework"></p>
-<p>当前还处于1.0时代，有了平面检测，但是也只是平面的检测，而不是桌面的检测或地面的检测或具体的物体平面。</p>
-<h2 id="后记">后记</h2>
-<p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
-<hr>
-<blockquote>
-<p>总的来讲，行文断断续续，越断越爽，越续越差。:expressionless:</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>XR</category>
-      </categories>
-      <tags>
-        <tag>Study Notes</tag>
-        <tag>XR</tag>
       </tags>
   </entry>
   <entry>
@@ -1214,7 +846,7 @@
 <li>确保NexT原生的<code>darkmode</code>选项设置为<code>false</code></li>
 </ul>
 <p>效果展示：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG" alt="暗黑模式效果展示"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG" alt=""></p>
 <blockquote>
 <p>深色模式参考博客：<a href="https://blog.csdn.net/rqh656418510/article/details/123676457">https://blog.csdn.net/rqh656418510/article/details/123676457</a></p>
 </blockquote>
@@ -1230,7 +862,7 @@
 <p><a href="https://www.emojiall.com/zh-hans">一个emoji表情网站</a></p>
 </li>
 <li>
-<p>此外，Typora支持直接输入emoji表情，其格式为<code>:emoji_code:</code>，例如<code>:smile:</code>对应:smile:。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。</p>
+<p>此外，Typora支持直接输入emoji表情，其格式为<code>:emoji_code:</code>，例如<code>:smile:</code>对应😄。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。</p>
 <p><strong>参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。</strong></p>
 </li>
 </ul>
@@ -1261,6 +893,374 @@
         <tag>Github Pages</tag>
         <tag>Hexo</tag>
         <tag>NexT主题</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Github + PicGo + Typora搭建图床</title>
+    <url>/how-to-insert-image-into-blog/</url>
+    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
+<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
+<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+<span id="more"></span>
+<h2 id="Github">Github</h2>
+<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
+<h2 id="PicGo">PicGo</h2>
+<h3 id="下载">下载</h3>
+<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
+<h3 id="配置">配置</h3>
+<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<ul>
+<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
+<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
+<li>Token：需要手动创建
+<ul>
+<li>打开Settings</li>
+<li>左侧菜单最下面点击<code>Developer settings</code></li>
+<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
+<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
+<li>将生成的token复制到PicGo的设置里</li>
+</ul>
+</li>
+</ul>
+<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
+<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
+<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
+<p>参考设置如图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt=""></p>
+<h2 id="Typora">Typora</h2>
+<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
+<p>配置过程为：</p>
+<ul>
+<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
+<li>如下图所示，依次设置：
+<ul>
+<li>图片存储方式：上传图片</li>
+<li>PicGo路径：选择为PicGo的安装路径</li>
+<li>点击<strong>验证图片上传选项</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt=""></p>
+<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
+<p>此时就可以直接复制图片到Typora了。</p>
+<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
+<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
+<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
+<blockquote>
+<p><s><strong>使用Typora</strong></s><br>
+<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
+<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
+</blockquote>
+<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
+<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
+<blockquote>
+<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
+</blockquote>
+<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
+<ul>
+<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
+</ul>
+<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
+<p><strong>解决</strong>：修改hosts文件</p>
+<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
+<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></table></figure>
+<p>重启Typora即可。</p>
+<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<h2 id="参考">参考</h2>
+<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
+<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>PicGo</tag>
+        <tag>图床搭建</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>认识SLAM算法</title>
+    <url>/what-is-slam-algo/</url>
+    <content><![CDATA[<h2 id="前言">前言</h2>
+<p>因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。</p>
+<h2 id="什么是SLAM算法">什么是SLAM算法</h2>
+<p>SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：</p>
+<ul>
+<li>定位</li>
+<li>建图</li>
+</ul>
+<p>定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。</p>
+<span id="more"></span>
+<p>因此，SLAM算法的目标可以总结为：<strong>在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt=""></p>
+<p>SLAM算法的工作内容，可以形象的描述为：</p>
+<p>当我们进入一个未知的环境时，</p>
+<ol>
+<li>特征标记：用”眼睛“观察周围地标，并记住他们的特征。</li>
+<li>在自己的”脑海“中，根据双眼获得的信息，把特征地标在三维地图中重建出来。</li>
+<li>当自己在行走时，不断获取新的特征地标，并且校正头脑中的地图模型。</li>
+<li>根据自己前一段时间行走获得的地表特征，确定自己的位置。</li>
+</ol>
+<p>在此过程中，定位和建图是同时进行的。</p>
+<h3 id="VR中的SLAM">VR中的SLAM</h3>
+<p>VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己在空间中的哪个位置，我在哪里（移动位置x,y,z），我在看哪个方向（旋转角度），同时建图以确定周边的环境是什么样子的。</p>
+<h4 id="定位">定位</h4>
+<p>在VR中，SLAM算法的输出就是<strong>6DOF</strong>(degree of freedom)，即orientation + position。其实这个6DOF指的头6，在VR中还有手6DOF和物体6DOF的概念。</p>
+<h4 id="建图">建图</h4>
+<p>SLAM建立的地图可以分为三种：</p>
+<ul>
+<li>稀疏地图</li>
+<li>稠密地图</li>
+<li>语义地图</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt=""></p>
+<h2 id="SLAM-Overview">SLAM Overview</h2>
+<h3 id="硬件方案">硬件方案</h3>
+<h4 id="6DOF的硬件方案：Inside-Out和Outside-In">6DOF的硬件方案：Inside-Out和Outside-In</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">方案</th>
+<th style="text-align:left">Outside-in 外向内</th>
+<th>Inside-out 内向外</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">原理</td>
+<td style="text-align:left">基于标记，需要固定在外部的追踪设备</td>
+<td>基于无标记，只需VR上的摄像头，使用SLAM算法</td>
+</tr>
+<tr>
+<td style="text-align:center">追踪精度</td>
+<td style="text-align:left">精度高，小于1mm</td>
+<td>精度略低</td>
+</tr>
+<tr>
+<td style="text-align:center">可移动范围</td>
+<td style="text-align:left">仅限于传感器监测范围</td>
+<td>移动范围无限制</td>
+</tr>
+<tr>
+<td style="text-align:center">跟踪死角</td>
+<td style="text-align:left">正常几乎无死角</td>
+<td>有跟踪死角</td>
+</tr>
+<tr>
+<td style="text-align:center">延迟</td>
+<td style="text-align:left">延迟相对少</td>
+<td>有一定延迟</td>
+</tr>
+<tr>
+<td style="text-align:center">抗遮挡</td>
+<td style="text-align:left">易受遮挡影响</td>
+<td>无遮挡问题</td>
+</tr>
+<tr>
+<td style="text-align:center">事前环境准备</td>
+<td style="text-align:left">需要</td>
+<td>不需要</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机">SLAM硬件：相机</h4>
+<table>
+<thead>
+<tr>
+<th>单目相机</th>
+<th>双目相机</th>
+<th>RGB-D相机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成本低</td>
+<td>计算深度</td>
+<td>主动测深度</td>
+</tr>
+<tr>
+<td>距离不受限</td>
+<td>距离不受限</td>
+<td>重建效果好</td>
+</tr>
+<tr>
+<td>尺度不确定性</td>
+<td>配置复杂</td>
+<td>测量范围小</td>
+</tr>
+<tr>
+<td>初始化问题</td>
+<td>计算量大</td>
+<td>受日光和材质干扰</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：-IMU">SLAM硬件： IMU</h4>
+<table>
+<thead>
+<tr>
+<th>加速计</th>
+<th>陀螺仪</th>
+<th>磁力计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检测物体在载体坐标系统独立三轴的加速度信号，对单方向加速度积分即可得到方向速度</td>
+<td>检测载体相对于导航坐标系的角速度信号</td>
+<td>检测载体相对于地球磁场的东南西北方向信号</td>
+</tr>
+<tr>
+<td>”我们又前进了几米“</td>
+<td>”我们转了几圈“</td>
+<td>”我们向西偏北方向“</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机和IMU互补">SLAM硬件：相机和IMU互补</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>IMU</th>
+<th>Camera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优势</td>
+<td>快速响应<br />不受成像质量影响<br />角速度普遍比较准确</td>
+<td>不产生漂移</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>存在零偏<br />低精度IMU积分位姿发散</td>
+<td>受图像遮挡、运动物体干扰<br />快速移动时易丢失</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：摆放要求">SLAM硬件：摆放要求</h4>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt=""></p>
+<ul>
+<li>下面两个相机是主相机，需要下偏，确保充足的双目重叠</li>
+<li>上面两个相机是辅相机，上偏，扩大跟踪FOV的同时兼顾前方盲区深度</li>
+<li>SLAM双目匹配，以及手柄、手势的主要活动区域，基本是以下面两个相机为主</li>
+<li>四目相机和IMU之间要保证刚性连接，否则一旦发生位移，就需要重新标定</li>
+</ul>
+<h3 id="6DOF标定">6DOF标定</h3>
+<h4 id="标定的目的">标定的目的</h4>
+<p>拿拍照来讲，拍照即为将三维的场景通过某种变换得到一张二维的照片，标定的目的就在于计算出一个数学模型，从而使得通过该数学模型，能够由二维的照片反推出三维的场景。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt=""></p>
+<h4 id="标定的好坏">标定的好坏</h4>
+<p>重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt=""></p>
+<p>图中<strong>e</strong>即为计算得到的重投影误差值</p>
+<h3 id="SLAM算法模块">SLAM算法模块</h3>
+<ul>
+<li>
+<p>传感器模块：数据采集</p>
+</li>
+<li>
+<p>视觉里程计模块：特征匹配</p>
+</li>
+<li>
+<p>后端模块：消除视觉里程计累计误差</p>
+</li>
+<li>
+<p>地图模块：构建三维地图</p>
+</li>
+<li>
+<p>回环检测模块：空间积累误差消除</p>
+</li>
+</ul>
+<p>SLAM系统可以分为前台线程和后台线程，其中：</p>
+<p>前台线程接收传感器数据，进行SLAM初始化和特征跟踪与位姿实时求解，并输出设备实时位姿和三维点云。</p>
+<p>后台线程进行局部或全局优化，减少误差累积；进行场景回路检测，并支持场景重定位。</p>
+<h3 id="SLAM业务架构">SLAM业务架构</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt=""></p>
+<p>在当前主流的解决方案中，VR Service是比较重要的一个模块。比如高通的QVRService，QVR负责接收sensor的数据，并交由DSP上的SLAM算法做融合，生成的6DOF pose通过QVR传递给SDK/APP端。</p>
+<h3 id="SLAM轨迹误差">SLAM轨迹误差</h3>
+<p>绝对轨迹误差：真实轨迹点和估计轨迹点之间的差值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt=""></p>
+<p>相对轨迹误差：位姿变化量的插值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt=""></p>
+<h3 id="SLAM性能指标">SLAM性能指标</h3>
+<table>
+<thead>
+<tr>
+<th>绝对位姿误差</th>
+<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br />最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>相对位姿误差</td>
+<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br />最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
+</tr>
+<tr>
+<td>漂移/draft</td>
+<td>无漂移，出现漂移，精度会非常差</td>
+</tr>
+<tr>
+<td>抖动/jitter</td>
+<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br />最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>延迟 &lt; 5ms</td>
+</tr>
+<tr>
+<td>重定位</td>
+<td>重定位时间 &lt; 1s，位置精度 &lt; 1cm</td>
+</tr>
+<tr>
+<td>追踪范围</td>
+<td>追踪范围 &lt; 10m * 10m</td>
+</tr>
+<tr>
+<td>光照敏感性</td>
+<td>明亮、灰暗、漆黑</td>
+</tr>
+<tr>
+<td>纹理敏感性</td>
+<td>高纹理、低纹理、无纹理</td>
+</tr>
+<tr>
+<td>跟踪敏感性</td>
+<td>位姿多变、快速距离切换、移动物体背景、传感器短暂失效</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Video-See-Through">Video See Through</h2>
+<p>AR/VR显示技术可以分为OST和VST</p>
+<ul>
+<li>OST：光学透视，真实世界通过放置在用户眼前的半透明光学合成器看到的，同时光学合成器也被用来将计算机生成的图像反射到用户的眼睛里，从而将真实世界和虚拟世界结合起来。</li>
+<li>VST：视频透视，通过相机实时捕捉真实画面，再和虚拟世界该呈现的画面融合，最终呈现在显示屏幕上。</li>
+</ul>
+<h2 id="三维重建">三维重建</h2>
+<p>常常被简写为3DR，全称为<strong>3D Reconstruction</strong>，其主要目的为实现更好的交互。</p>
+<h3 id="基本流程">基本流程</h3>
+<p>稀疏点云重建—&gt;稠密点云重建—&gt;点云网格重建—&gt;三维语义重建</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt=""></p>
+<p>3DR的实现依赖于很多算法，如场景理解、语义分割、目标识别、位姿估计等</p>
+<h3 id="3DR框架">3DR框架</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt=""></p>
+<p>当前还处于1.0时代，有了平面检测，但是也只是平面的检测，而不是桌面的检测或地面的检测或具体的物体平面。</p>
+<h2 id="后记">后记</h2>
+<p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
+<hr>
+<blockquote>
+<p>总的来讲，行文断断续续，越断越爽，越续越差。😑</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>XR</category>
+      </categories>
+      <tags>
+        <tag>Study Notes</tag>
+        <tag>XR</tag>
       </tags>
   </entry>
 </search>

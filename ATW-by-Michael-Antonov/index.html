@@ -317,11 +317,11 @@
 <p>Michael Abrash（作者本人）在其 2013 年的博文（原文中贴的链接已失效）中详细介绍了抖动及其后果。阅读迈克尔关于抖动的笔记将有助于您更好地理解本篇文章。</p>
 <blockquote>
 <p>In order to produce a perceptually correct representation of the virtual world, the images on the displays must be updated with every vsync refresh. However, if rendering takes too long, a frame will be missed, resulting in judder. This is because when no new frame has been rendered, the video adapter scans out the same image a second time. Here is what an object location looks like if the same rendered frame is displayed two frames in a row before updating:</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt=""></p>
 <p><em>Here, the eye is rotating to the left. When the same image is displayed again, its light falls on a different part of the retina, resulting in double image judder.</em></p>
 </blockquote>
 <p>为了在虚拟世界呈现正确的感知，屏幕图像必须在每次VSync时刷新。然而，如果渲染耗费太长时间，就会错过一帧，这就导致了抖动。这是因为当没有渲染新的帧时，视频适配器对同一张图像进行了二次扫描。在更新前连续显示同一渲染帧时，对象位置的情况如下图所示：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt=""></p>
 <p><em>在这里，眼睛向左旋转。当再次显示同一图像时，光线落在视网膜的不同部分，导致重影抖动。</em></p>
 <blockquote>
 <p>Of course, doubling is not the only possible effect. If we displayed the same frame three times in a row, you would get a triple image on your retina and so on.</p>
@@ -343,11 +343,11 @@
 <blockquote>
 <p><strong>Positional Judder</strong></p>
 <p>Positional judder is one of the most obvious artifacts with orientation-only timewarp. When you move your head, only the additional rotational component is reflected in the ATW-generated images, while any translational head movement since the frame was rendered is ignored. This means that as you move your head from side to side, or even just rotate your head which translates your eyes, you will see multiple-image judder on objects that are close to you. The effect is very noticeable in spaces with near field objects, such as the submarine screenshot below.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt=""></p>
 </blockquote>
 <p><strong>位置抖动</strong></p>
 <p>位置抖动是基于方向的时间扭曲带来的最明显的瑕疵之一。当移动头部时，只有额外的旋转部分会反映在ATW生成的图像中，而自帧被渲染以来的所有头部平移都会被忽略。这就意味着当左右移动头部，甚至只是旋转头部使眼睛平移时，将在靠近的物体上观察到多重图像抖动。这种效果在有近场物体时非常明显，例如下面的潜艇截图：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt=""></p>
 <blockquote>
 <p>So, how bad is this effect?</p>
 <p>The magnitude of positional judder depends on the environment the player is in and the types of movements they make. If you keep your head relatively still and only look around at the scenery, the positional error will be small and the judder will not be very noticeable.</p>
@@ -373,12 +373,12 @@
 <blockquote>
 <p><strong>Moving and Animated Objects</strong></p>
 <p>Animated or moving objects cause another artifact with ATW: because a new image is generated just by warping the original image without knowledge of the movement of objects, for all ATW-generated frames they are effectively frozen in time. This artifact manifests as multiple images of these moving objects — i.e. judder.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt=""></p>
 <center>Image of scene with a moving object affected by judder.</center>
 </blockquote>
 <p><strong>移动和动画物体</strong></p>
 <p>动画或移动中的物体导致了另一个ATW中的瑕疵：由于新图像是在不知道物体移动的情况下通过扭曲原始图像生成的，因此在所有ATW生成的帧中，这些物体实际上都被冻结在时间中。这种伪像表现为这些移动物体的多幅图像，即抖动。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt=""></p>
 <center>Image of scene with a moving object affected by judder.</center>
 <blockquote>
 <p>The impact of this artifact depends on the number, projected area, and speed of animated objects in the game scene: if the number or size of moving objects is small or they are not moving fast, the multiple images may not be particularly noticeable. However, when moving objects or animation covers a large portion of the screen it can be disturbing.</p>
@@ -389,13 +389,13 @@
 <blockquote>
 <p><strong>Specular and Reflection</strong></p>
 <p>Calculations for reflections and specular lighting consider the direction of the eye vector, or rendering camera vector, to produce an image that is custom rendered for each eye.</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt=""></p>
 </blockquote>
 <p><strong>镜面反射</strong></p>
 <p>计算镜面反射需考虑眼睛的方向， 或摄像机（Unity里的camera？）的方向， 由此为每只眼睛生成一张定制的渲染画面。</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt=""></p>
 <blockquote>
 <p><em>Diagrams courtesy of Wikipedia and <a target="_blank" rel="noopener" href="http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html">http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html</a> respectively.</em></p>
 <p>Since this eye vector changes with head movement, specular and reflection rendering is no longer correct after timewarp. This may result in reflections and specular highlights juddering.</p>
@@ -425,7 +425,7 @@
 <p>What we really want is for ATW to run consistently shortly before the video card flips to a new frame for scan-out, with just enough time to complete the generation of the new timewarped frame. Short of having custom vsync-triggered ATW interrupt routines, we can achieve this with high-priority preemption granularity and scheduling of around 2ms or less.</p>
 </blockquote>
 <p>然而，11ms实际上还不够好：如果ATW在一帧内随机的时间点开始运行，其延迟(执行和帧扫描之间的时间间隔)也将是随机的。而且，我们需要确保不会调过任何游戏渲染的帧。</p>
-<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 :sweat_smile:）</p>
+<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 😅）</p>
 <blockquote>
 <p>It turns out that 2ms preemption on general rendering is a tall order for modern video cards and driver implementations. Although many GPUs support limited forms of preemption, the implementation varies significantly:</p>
 <ul>
