@@ -15,7 +15,6 @@
     "hexo": "^6.3.0",
     "hexo-asset-image": "^1.0.0",
     "hexo-deployer-git": "^4.0.0",
-    "hexo-filter-github-emojis": "^3.0.5",
     "hexo-front-matter": "^4.2.1",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",
