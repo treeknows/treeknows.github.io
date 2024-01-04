@@ -1,139 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Android禁用自动休眠和锁屏</title>
-    <url>/Disable-Screen-Lock-In-Android/</url>
-    <content><![CDATA[<blockquote>
-<p>考古以前放在有道的笔记，仅作记录</p>
-</blockquote>
-<h4 id="休眠">休眠</h4>
-<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
-<span id="more"></span>
-<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
-<p>具体的流程分析，// TODO</p>
-<p>先帖两篇相关的博客：<a href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
-<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
-<figure class="highlight gradle"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<h4 id="锁屏">锁屏</h4>
-<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
-<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
-<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
-<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> {                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">"lockscreen.disabled"</span>;</span><br></pre></td></tr></tbody></table></figure>
-<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
-<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
-<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
-<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
-<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
-<figure class="highlight typescript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    } <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) {</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    }    </span><br><span class="line">}        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) {                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) {</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">"lock_settings"</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    }                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">}                     </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
-<figure class="highlight reasonml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">"1"</span>)<span class="operator"> || </span>value.equals(<span class="string">"true"</span>));</span><br><span class="line">}               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> {      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">"1"</span> : <span class="string">"0"</span>;</span><br><span class="line">        } finally {</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        }          </span><br><span class="line">    }              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) {</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">}              </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
-<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
-<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
-<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> {                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() {</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> {         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">"ro.lockscreen.disable.default"</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) {                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">"1"</span>, <span class="number">0</span>);</span><br><span class="line">            }                                               </span><br><span class="line">        }                                                   </span><br><span class="line">    });                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">}                                                           </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
-<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
-<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
-<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">"ro.build.keys=<span class="variable">$BUILD_KEYS</span>"</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">"<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">"ro.lockscreen.disable.default=true"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>"</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
-<blockquote>
-<p>血与泪的教训：-(</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>Framework</category>
-      </categories>
-      <tags>
-        <tag>Android Framework</tag>
-        <tag>经验</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Github + PicGo + Typora搭建图床</title>
-    <url>/how-to-insert-image-into-blog/</url>
-    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
-<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
-<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
-<span id="more"></span>
-<h2 id="Github">Github</h2>
-<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
-<h2 id="PicGo">PicGo</h2>
-<h3 id="下载">下载</h3>
-<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
-<h3 id="配置">配置</h3>
-<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
-<ul>
-<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
-<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
-<li>Token：需要手动创建
-<ul>
-<li>打开Settings</li>
-<li>左侧菜单最下面点击<code>Developer settings</code></li>
-<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
-<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
-<li>将生成的token复制到PicGo的设置里</li>
-</ul>
-</li>
-</ul>
-<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
-<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
-<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
-<p>参考设置如图：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
-<h2 id="Typora">Typora</h2>
-<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
-<p>配置过程为：</p>
-<ul>
-<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
-<li>如下图所示，依次设置：
-<ul>
-<li>图片存储方式：上传图片</li>
-<li>PicGo路径：选择为PicGo的安装路径</li>
-<li>点击<strong>验证图片上传选项</strong></li>
-</ul>
-</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
-<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
-<p>此时就可以直接复制图片到Typora了。</p>
-<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
-<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
-<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
-<blockquote>
-<p><s><strong>使用Typora</strong></s><br>
-<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
-<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
-</blockquote>
-<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
-<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
-<blockquote>
-<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
-</blockquote>
-<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
-<ul>
-<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
-</ul>
-<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
-<p><strong>解决</strong>：修改hosts文件</p>
-<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
-<figure class="highlight accesslog"><table><tbody><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></tbody></table></figure>
-<p>重启Typora即可。</p>
-<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
-<h2 id="参考">参考</h2>
-<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
-<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>经验</tag>
-        <tag>PicGo</tag>
-        <tag>图床搭建</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ATW概述-by Michael Antonov</title>
     <url>/ATW-by-Michael-Antonov/</url>
     <content><![CDATA[<hr>
@@ -147,11 +14,11 @@
 <p>中文译文</p>
 <p>（自言自语）</p>
 <hr>
+<span id="more"></span>
 <blockquote>
 <p><em><strong>TL;DR:</strong> Asynchronous timewarp (ATW) is a technique that generates intermediate frames in situations when the game can’t maintain frame rate, helping to reduce judder. However, ATW is not a silver bullet and has limitations that developers should be aware of.</em></p>
 </blockquote>
 <p><em>Too long, don’t read. 异步时间扭曲(ATW)是一种在游戏无法保持帧率时生成中间帧的技术，帮助减少抖动。然而，ATW并不是万能的，它也有一些局限性，开发人员应当知晓。</em></p>
-<span id="more"></span>
 <blockquote>
 <p><strong>Intro</strong></p>
 <p>Over the past year there’s been a lot of excitement around asynchronous timewarp (ATW). Many hoped that ATW would allow engines to run and render at a lower frame rate, using ATW to artificially fill in dropped frames without a significant drop in the VR quality.</p>
@@ -981,6 +848,54 @@
       </tags>
   </entry>
   <entry>
+    <title>Android禁用自动休眠和锁屏</title>
+    <url>/Disable-Screen-Lock-In-Android/</url>
+    <content><![CDATA[<blockquote>
+<p>考古以前放在有道的笔记，仅作记录</p>
+</blockquote>
+<h4 id="休眠">休眠</h4>
+<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
+<span id="more"></span>
+<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
+<p>具体的流程分析，// TODO</p>
+<p>先帖两篇相关的博客：<a href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
+<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
+<figure class="highlight gradle"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h4 id="锁屏">锁屏</h4>
+<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
+<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
+<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> {                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">"lockscreen.disabled"</span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
+<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
+<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
+<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
+<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
+<figure class="highlight typescript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    } <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) {</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    }    </span><br><span class="line">}        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) {                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) {</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">"lock_settings"</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    }                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">}                     </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
+<figure class="highlight reasonml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">"1"</span>)<span class="operator"> || </span>value.equals(<span class="string">"true"</span>));</span><br><span class="line">}               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> {      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">"1"</span> : <span class="string">"0"</span>;</span><br><span class="line">        } finally {</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        }          </span><br><span class="line">    }              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) {</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">}              </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
+<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
+<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> {                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() {</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> {         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">"ro.lockscreen.disable.default"</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) {                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">"1"</span>, <span class="number">0</span>);</span><br><span class="line">            }                                               </span><br><span class="line">        }                                                   </span><br><span class="line">    });                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">}                                                           </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
+<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
+<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">"ro.build.keys=<span class="variable">$BUILD_KEYS</span>"</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">"<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">"ro.lockscreen.disable.default=true"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>"</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
+<blockquote>
+<p>血与泪的教训：-(</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Framework</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>Android Framework</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>认识SLAM算法</title>
     <url>/what-is-slam-algo/</url>
     <content><![CDATA[<h2 id="前言">前言</h2>
@@ -1261,6 +1176,91 @@
       <tags>
         <tag>Study Notes</tag>
         <tag>XR</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Github + PicGo + Typora搭建图床</title>
+    <url>/how-to-insert-image-into-blog/</url>
+    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
+<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
+<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+<span id="more"></span>
+<h2 id="Github">Github</h2>
+<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
+<h2 id="PicGo">PicGo</h2>
+<h3 id="下载">下载</h3>
+<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
+<h3 id="配置">配置</h3>
+<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<ul>
+<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
+<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
+<li>Token：需要手动创建
+<ul>
+<li>打开Settings</li>
+<li>左侧菜单最下面点击<code>Developer settings</code></li>
+<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
+<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
+<li>将生成的token复制到PicGo的设置里</li>
+</ul>
+</li>
+</ul>
+<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
+<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
+<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
+<p>参考设置如图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
+<h2 id="Typora">Typora</h2>
+<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
+<p>配置过程为：</p>
+<ul>
+<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
+<li>如下图所示，依次设置：
+<ul>
+<li>图片存储方式：上传图片</li>
+<li>PicGo路径：选择为PicGo的安装路径</li>
+<li>点击<strong>验证图片上传选项</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
+<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
+<p>此时就可以直接复制图片到Typora了。</p>
+<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
+<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
+<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
+<blockquote>
+<p><s><strong>使用Typora</strong></s><br>
+<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
+<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
+</blockquote>
+<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
+<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
+<blockquote>
+<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
+</blockquote>
+<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
+<ul>
+<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
+</ul>
+<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
+<p><strong>解决</strong>：修改hosts文件</p>
+<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
+<figure class="highlight accesslog"><table><tbody><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></tbody></table></figure>
+<p>重启Typora即可。</p>
+<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<h2 id="参考">参考</h2>
+<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
+<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>PicGo</tag>
+        <tag>图床搭建</tag>
       </tags>
   </entry>
 </search>
