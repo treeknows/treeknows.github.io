@@ -1246,9 +1246,10 @@
 <p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
 <p><strong>解决</strong>：修改hosts文件</p>
 <p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
-<figure class="highlight accesslog"><table><tbody><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></table></figure>
 <p>重启Typora即可。</p>
 <p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<p><img src="https://gitee.com/darlinn/blog_pic/raw/master/imgs/912922.png" alt="haha"></p>
 <h2 id="参考">参考</h2>
 <p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
 <p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
