@@ -41,7 +41,6 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg">
-<meta property="og:image" content="https://github.githubassets.com/images/icons/emoji/unicode/1f605.png?v8">
 <meta property="article:published_time" content="2024-01-04T05:57:50.000Z">
 <meta property="article:modified_time" content="2024-01-04T08:31:26.289Z">
 <meta property="article:author" content="treeknows">
@@ -426,7 +425,7 @@
 <p>What we really want is for ATW to run consistently shortly before the video card flips to a new frame for scan-out, with just enough time to complete the generation of the new timewarped frame. Short of having custom vsync-triggered ATW interrupt routines, we can achieve this with high-priority preemption granularity and scheduling of around 2ms or less.</p>
 </blockquote>
 <p>然而，11ms实际上还不够好：如果ATW在一帧内随机的时间点开始运行，其延迟(执行和帧扫描之间的时间间隔)也将是随机的。而且，我们需要确保不会调过任何游戏渲染的帧。</p>
-<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 <span class="github-emoji"><span>😅</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f605.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span>）</p>
+<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 :sweat_smile:）</p>
 <blockquote>
 <p>It turns out that 2ms preemption on general rendering is a tall order for modern video cards and driver implementations. Although many GPUs support limited forms of preemption, the implementation varies significantly:</p>
 <ul>
@@ -654,7 +653,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">48k</span>
+    <span title="站点总字数">49k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>

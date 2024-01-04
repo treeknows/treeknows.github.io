@@ -154,7 +154,7 @@
 <p>What we really want is for ATW to run consistently shortly before the video card flips to a new frame for scan-out, with just enough time to complete the generation of the new timewarped frame. Short of having custom vsync-triggered ATW interrupt routines, we can achieve this with high-priority preemption granularity and scheduling of around 2ms or less.</p>
 </blockquote>
 <p>然而，11ms实际上还不够好：如果ATW在一帧内随机的时间点开始运行，其延迟(执行和帧扫描之间的时间间隔)也将是随机的。而且，我们需要确保不会调过任何游戏渲染的帧。</p>
-<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 <span class="github-emoji"><span>😅</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f605.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span>）</p>
+<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 :sweat_smile:）</p>
 <blockquote>
 <p>It turns out that 2ms preemption on general rendering is a tall order for modern video cards and driver implementations. Although many GPUs support limited forms of preemption, the implementation varies significantly:</p>
 <ul>
@@ -200,6 +200,139 @@
       <tags>
         <tag>XR</tag>
         <tag>Rendering</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android禁用自动休眠和锁屏</title>
+    <url>/Disable-Screen-Lock-In-Android/</url>
+    <content><![CDATA[<blockquote>
+<p>考古以前放在有道的笔记，仅作记录</p>
+</blockquote>
+<h4 id="休眠">休眠</h4>
+<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
+<span id="more"></span>
+<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
+<p>具体的流程分析，// TODO</p>
+<p>先帖两篇相关的博客：<a href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
+<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
+<figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">&quot;config_minimumScreenOffTimeout&quot;</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">&quot;config_minimumScreenOffTimeout&quot;</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="锁屏">锁屏</h4>
+<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
+<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
+<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> &#123;                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">&quot;lockscreen.disabled&quot;</span>;</span><br></pre></td></tr></table></figure>
+<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
+<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
+<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
+<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
+<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
+<figure class="highlight typescript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) &#123;</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    &#125;    </span><br><span class="line">&#125;        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) &#123;                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">&quot;lock_settings&quot;</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    &#125;                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">&#125;                     </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> &#123;</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">&quot;1&quot;</span>)<span class="operator"> || </span>value.equals(<span class="string">&quot;true&quot;</span>));</span><br><span class="line">&#125;               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) &#123;</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">&quot;1&quot;</span> : <span class="string">&quot;0&quot;</span>;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        &#125;          </span><br><span class="line">    &#125;              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) &#123;</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    &#125;          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) &#123;</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    &#125;          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">&#125;              </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
+<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
+<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> &#123;                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() &#123;</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> &#123;         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">&quot;ro.lockscreen.disable.default&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) &#123;                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">&quot;1&quot;</span>, <span class="number">0</span>);</span><br><span class="line">            &#125;                                               </span><br><span class="line">        &#125;                                                   </span><br><span class="line">    &#125;);                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">&#125;                                                           </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
+<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
+<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">&quot;ro.build.keys=<span class="variable">$BUILD_KEYS</span>&quot;</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">&quot;<span class="variable">$DISPLAY_BUILD_NUMBER</span>&quot;</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">&quot;ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>&quot;</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">&quot;ro.lockscreen.disable.default=true&quot;</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">&quot;ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>&quot;</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">&quot;ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>&quot;</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">&quot;ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
+<blockquote>
+<p>血与泪的教训：-(</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Framework</category>
+      </categories>
+      <tags>
+        <tag>Android Framework</tag>
+        <tag>经验</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Github + PicGo + Typora搭建图床</title>
+    <url>/how-to-insert-image-into-blog/</url>
+    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
+<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
+<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+<span id="more"></span>
+<h2 id="Github">Github</h2>
+<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
+<h2 id="PicGo">PicGo</h2>
+<h3 id="下载">下载</h3>
+<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
+<h3 id="配置">配置</h3>
+<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<ul>
+<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
+<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
+<li>Token：需要手动创建
+<ul>
+<li>打开Settings</li>
+<li>左侧菜单最下面点击<code>Developer settings</code></li>
+<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
+<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
+<li>将生成的token复制到PicGo的设置里</li>
+</ul>
+</li>
+</ul>
+<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
+<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
+<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
+<p>参考设置如图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
+<h2 id="Typora">Typora</h2>
+<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
+<p>配置过程为：</p>
+<ul>
+<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
+<li>如下图所示，依次设置：
+<ul>
+<li>图片存储方式：上传图片</li>
+<li>PicGo路径：选择为PicGo的安装路径</li>
+<li>点击<strong>验证图片上传选项</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
+<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
+<p>此时就可以直接复制图片到Typora了。</p>
+<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
+<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
+<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
+<blockquote>
+<p><s><strong>使用Typora</strong></s><br>
+<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
+<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
+</blockquote>
+<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
+<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
+<blockquote>
+<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
+</blockquote>
+<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
+<ul>
+<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
+</ul>
+<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
+<p><strong>解决</strong>：修改hosts文件</p>
+<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
+<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></table></figure>
+<p>重启Typora即可。</p>
+<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<h2 id="参考">参考</h2>
+<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
+<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>PicGo</tag>
+        <tag>图床搭建</tag>
       </tags>
   </entry>
   <entry>
@@ -305,14 +438,14 @@
 <p>macOS or Linux安装方式请自行google</p>
 </blockquote>
 <p>安装完成之后，打开<strong>git bash</strong>，输入以下命令检查安装是否成功</p>
-<figure class="highlight crmsh"><table><tbody><tr><td class="code"><pre><span class="line">$ <span class="keyword">node</span> <span class="title">-v</span></span><br><span class="line">v18.<span class="number">15.0</span></span><br><span class="line"></span><br><span class="line">$ npm -v</span><br><span class="line"><span class="number">9.5</span>.<span class="number">0</span></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight crmsh"><table><tr><td class="code"><pre><span class="line">$ <span class="keyword">node</span> <span class="title">-v</span></span><br><span class="line">v18.<span class="number">15.0</span></span><br><span class="line"></span><br><span class="line">$ npm -v</span><br><span class="line"><span class="number">9.5</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
 <p>一般情况下是不会有问题的，我安装的很顺利，所以没有相关的报错可以提供解决思路。</p>
 <h5 id="Hexo安装">Hexo安装</h5>
 <p>安装Hexo只需执行下述命令，亦可以在<a href="https://hexo.io/zh-cn/">Hexo官网</a>查看安装及使用方法。</p>
-<figure class="highlight crystal"><table><tbody><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>npm install -g hexo-cli</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看hexo版本</span></span><br><span class="line"><span class="variable">$ </span>hexo -v</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight crystal"><table><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>npm install -g hexo-cli</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看hexo版本</span></span><br><span class="line"><span class="variable">$ </span>hexo -v</span><br></pre></td></tr></table></figure>
 <p>我当时在安装hexo结束之后，查看版本会报错，找不到hexo命令。</p>
 <p>似乎看起来是安装没有成功，但是<strong>npm install</strong>却也没有打印出任何error信息，最终的解决办法为：</p>
-<figure class="highlight avrasm"><table><tbody><tr><td class="code"><pre><span class="line">$ npx hexo -v</span><br><span class="line">hexo-<span class="keyword">cli</span>: <span class="number">4.3</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">os:</span> win32 <span class="number">10.0</span><span class="number">.19044</span></span><br><span class="line"><span class="symbol">node:</span> <span class="number">18.15</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">v8:</span> <span class="number">10.2</span><span class="number">.154</span><span class="number">.26</span>-node<span class="number">.25</span></span><br><span class="line">···</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight avrasm"><table><tr><td class="code"><pre><span class="line">$ npx hexo -v</span><br><span class="line">hexo-<span class="keyword">cli</span>: <span class="number">4.3</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">os:</span> win32 <span class="number">10.0</span><span class="number">.19044</span></span><br><span class="line"><span class="symbol">node:</span> <span class="number">18.15</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">v8:</span> <span class="number">10.2</span><span class="number">.154</span><span class="number">.26</span>-node<span class="number">.25</span></span><br><span class="line">···</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p>是的，执行<code>npx hexo</code>而不是<code>hexo</code></p>
 <blockquote>
 <p>2023.09.28更新：</p>
@@ -324,33 +457,33 @@
 <p>但是在安装之前，要唠叨两句。考虑到博客的框架、主题、配置是在本地环境下的，如果涉及到更换电脑，便需要推倒重来，于是便新建了<strong>hexo</strong>分支来管理博客的主题和配置文件，博客站点的真正内容会部署到<strong>master</strong>分支。这样如果换了电脑，便只需要安装<strong>NodeJS</strong>和<strong>Hexo</strong>，就能直接得到原本的博客环境啦。</p>
 <h5 id="Hexo初始化">Hexo初始化</h5>
 <p>首先是要先把新建的仓库clone到本地，新建博客源码分支<strong>hexo</strong>，初始化hexo，具体命令如下：</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"></span><br><span class="line">$ git clone xxxxxx <span class="regexp">//</span> xxxxx是github上复制的clone地址</span><br><span class="line"></span><br><span class="line">$ cd xxxxxx <span class="regexp">//</span> clone到本地会生成一个跟仓库同名的目录</span><br><span class="line"></span><br><span class="line">$ git checkout -b hexo <span class="regexp">//</span> 创建并切换到hexo分支</span><br><span class="line"></span><br><span class="line">$ hexo init hexo <span class="regexp">//</span> 初始化hexo，第一个hexo是cmd，第二个hexo是新建hexo目录</span><br><span class="line"></span><br><span class="line">$ cd hexo <span class="regexp">//</span> 进入新建的hexo目录</span><br><span class="line"></span><br><span class="line">$ npm install <span class="regexp">//</span> 安装相关依赖</span><br><span class="line"></span><br><span class="line">$ hexo g <span class="regexp">//</span> generate，生成静态网站</span><br><span class="line"></span><br><span class="line">$ hexo s <span class="regexp">//</span> server，本地预览</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">$ git clone xxxxxx <span class="regexp">//</span> xxxxx是github上复制的clone地址</span><br><span class="line"></span><br><span class="line">$ cd xxxxxx <span class="regexp">//</span> clone到本地会生成一个跟仓库同名的目录</span><br><span class="line"></span><br><span class="line">$ git checkout -b hexo <span class="regexp">//</span> 创建并切换到hexo分支</span><br><span class="line"></span><br><span class="line">$ hexo init hexo <span class="regexp">//</span> 初始化hexo，第一个hexo是cmd，第二个hexo是新建hexo目录</span><br><span class="line"></span><br><span class="line">$ cd hexo <span class="regexp">//</span> 进入新建的hexo目录</span><br><span class="line"></span><br><span class="line">$ npm install <span class="regexp">//</span> 安装相关依赖</span><br><span class="line"></span><br><span class="line">$ hexo g <span class="regexp">//</span> generate，生成静态网站</span><br><span class="line"></span><br><span class="line">$ hexo s <span class="regexp">//</span> server，本地预览</span><br></pre></td></tr></table></figure>
 <p>到这里就可以打开浏览器输入<strong>localhost:4000</strong>，进行本地预览了。</p>
 <blockquote>
 <p>上述步骤中，如有需要<strong>hexo</strong>请灵活替换为<strong>npx hexo</strong>，以及过程来自于回忆，如果哪一步的输出有报错，请google解决一下，也欢迎<strong>留言咨询</strong>。</p>
 </blockquote>
 <p>此时本地预览的界面是Hexo默认的主题，接下来介绍安装NexT主题。</p>
 <h5 id="NexT主题安装">NexT主题安装</h5>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">$ cd hexo <span class="regexp">//</span>确保当前目录处于hexo目录下</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> clone NexT主题，如果使用https clone报错，可以自行替换为ssh的链接</span><br><span class="line">$ git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/theme-next/</span>hexo-theme-<span class="keyword">next</span> themes/<span class="keyword">next</span> </span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">$ cd hexo <span class="regexp">//</span>确保当前目录处于hexo目录下</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> clone NexT主题，如果使用https clone报错，可以自行替换为ssh的链接</span><br><span class="line">$ git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/theme-next/</span>hexo-theme-<span class="keyword">next</span> themes/<span class="keyword">next</span> </span><br></pre></td></tr></table></figure>
 <p>此时NexT主题就已经安装到本地了，其配置保存在<strong>themes/next</strong>目录下。若想要启用NexT主题，还需要修改Hexo的配置文件<code>_config.yml</code>，注意此文件应位于<strong>hexo</strong>目录下，称为<strong>站点配置文件</strong>。在<strong>themes/next</strong>路径下也有一个<code>_config.yml</code>，称之为<strong>主题配置文件</strong>。</p>
 <p>在<strong>站点配置文件</strong>中搜索<strong>theme</strong>，修改为如下值：</p>
-<figure class="highlight clean"><table><tbody><tr><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https:<span class="comment">//hexo.io/plugins/</span></span><br><span class="line">## Themes: https:<span class="comment">//hexo.io/themes/</span></span><br><span class="line"># 启用主题</span><br><span class="line">theme: next</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https:<span class="comment">//hexo.io/plugins/</span></span><br><span class="line">## Themes: https:<span class="comment">//hexo.io/themes/</span></span><br><span class="line"># 启用主题</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure>
 <p>执行如下命令本地验证主题是否生效：</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo clean <span class="regexp">//</span> 清理之前生成的资源</span><br><span class="line">$ hexo g <span class="regexp">//</span> 重新生成</span><br><span class="line">$ hexo s <span class="regexp">//</span> 启动本地服务</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">$ hexo clean <span class="regexp">//</span> 清理之前生成的资源</span><br><span class="line">$ hexo g <span class="regexp">//</span> 重新生成</span><br><span class="line">$ hexo s <span class="regexp">//</span> 启动本地服务</span><br></pre></td></tr></table></figure>
 <p>打开浏览器输入<strong>localhost:4000</strong>，进行本地预览。</p>
 <h5 id="部署到Github-Pages">部署到Github Pages</h5>
 <p>本地预览无误，便可部署到Github Pages了。</p>
 <p>首先需要安装插件<strong>hexo-deployer-git</strong></p>
-<figure class="highlight ada"><table><tbody><tr><td class="code"><pre><span class="line">$ npm install hexo-deployer-git <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight ada"><table><tr><td class="code"><pre><span class="line">$ npm install hexo-deployer-git <span class="comment">--save</span></span><br></pre></td></tr></table></figure>
 <p>修改<strong>站点配置文件</strong>，搜索<strong>deploy</strong></p>
-<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta"># Deployment</span></span><br><span class="line"><span class="meta">## Docs: https:<span class="comment">//hexo.io/docs/one-command-deployment</span></span></span><br><span class="line"><span class="symbol">deploy:</span></span><br><span class="line"><span class="symbol">  type:</span> git</span><br><span class="line"><span class="symbol">  repo:</span></span><br><span class="line">      <span class="meta"># 需要替换为自己仓库的链接，根据https或ssh方式不同自由选择，我已经上传了公钥，所以选择ssh</span></span><br><span class="line"><span class="symbol">    github:</span> git@github.com:treeknows/treeknows.github.io.git</span><br><span class="line">  <span class="meta"># 此处似乎只能选择master，配置为main时，实际还是会部署到master分支</span></span><br><span class="line"><span class="symbol">  branch:</span> master</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="meta"># Deployment</span></span><br><span class="line"><span class="meta">## Docs: https:<span class="comment">//hexo.io/docs/one-command-deployment</span></span></span><br><span class="line"><span class="symbol">deploy:</span></span><br><span class="line"><span class="symbol">  type:</span> git</span><br><span class="line"><span class="symbol">  repo:</span></span><br><span class="line">      <span class="meta"># 需要替换为自己仓库的链接，根据https或ssh方式不同自由选择，我已经上传了公钥，所以选择ssh</span></span><br><span class="line"><span class="symbol">    github:</span> git@github.com:treeknows/treeknows.github.io.git</span><br><span class="line">  <span class="meta"># 此处似乎只能选择master，配置为main时，实际还是会部署到master分支</span></span><br><span class="line"><span class="symbol">  branch:</span> master</span><br></pre></td></tr></table></figure>
 <p>可以将配置修改为如上，记得<strong>替换自己的仓库链接</strong>。此外配置branch时，设置为<strong>main</strong>实测是无效的，依旧会push到master分支，如果没有master分支，则会自己创建。这也是为什么在前面推荐<strong>修改默认创建分支为master</strong>，来自强迫症患者的倔强。</p>
 <p>修改配置后，需要手动部署到Github</p>
-<figure class="highlight crystal"><table><tbody><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>hexo g -d</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight crystal"><table><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>hexo g -d</span><br></pre></td></tr></table></figure>
 <p>部署成功后，稍待片刻，便可访问自己的博客查看效果了。</p>
 <h5 id="备份Hexo">备份Hexo</h5>
 <p>此时博客已然部署完毕，但是相关的配置还只存在于本地，需要push到Github。</p>
-<figure class="highlight gams"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">$</span> git branch <span class="comment">// 请确保在hexo分支</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git add . <span class="comment">// 添加文件</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git commit <span class="comment">// 提交</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git push --<span class="keyword">set</span>-upstream <span class="comment">origin hexo</span> // 推送到远端</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight gams"><table><tr><td class="code"><pre><span class="line"><span class="symbol">$</span> git branch <span class="comment">// 请确保在hexo分支</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git add . <span class="comment">// 添加文件</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git commit <span class="comment">// 提交</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git push --<span class="keyword">set</span>-upstream <span class="comment">origin hexo</span> // 推送到远端</span><br></pre></td></tr></table></figure>
 <p>推送到Github之后，还需要在Github上将<strong>hexo</strong>设为默认分支，设置过程文字描述如下：</p>
 <ol>
 <li>打开博客仓库主页</li>
@@ -361,11 +494,11 @@
 <ol>
 <li>
 <p>clone 仓库 (默认分支为hexo)</p>
-<figure class="highlight crmsh"><table><tbody><tr><td class="code"><pre><span class="line">$ git <span class="keyword">clone</span> <span class="title">git</span>@github.com:*.github.io.git</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight crmsh"><table><tr><td class="code"><pre><span class="line">$ git <span class="keyword">clone</span> <span class="title">git</span>@github.com:*.github.io.git</span><br></pre></td></tr></table></figure>
 </li>
 <li>
 <p>在本地 *.github.io 文件夹下通过 Git bash 依次执行下列指令：</p>
-<figure class="highlight cmake"><table><tbody><tr><td class="code"><pre><span class="line">$ npm <span class="keyword">install</span> hexo</span><br><span class="line">$ npm <span class="keyword">install</span> </span><br><span class="line">$ npm <span class="keyword">install</span> hexo-deployer-git</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">$ npm <span class="keyword">install</span> hexo</span><br><span class="line">$ npm <span class="keyword">install</span> </span><br><span class="line">$ npm <span class="keyword">install</span> hexo-deployer-git</span><br></pre></td></tr></table></figure>
 </li>
 </ol>
 <blockquote>
@@ -398,7 +531,7 @@
 </ul>
 <p>基础配置诸如网站标题、描述一类的配置，篇幅不会太长；个性配置便有很多说头了，我会另写一篇博客专门介绍，不会太久。</p>
 <p>基础配置位于站点配置文件的开头，大致有以下几种：</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Site</span></span><br><span class="line">title: <span class="regexp">//</span> 网站标题</span><br><span class="line">subtitle: <span class="regexp">//</span> 子标题，在主页显示，看起来的效果更像一个签名</span><br><span class="line">description: <span class="regexp">//</span> 在侧边栏显示，效果也像是签名</span><br><span class="line">keywords: <span class="regexp">//</span> 网站关键字</span><br><span class="line">author: <span class="regexp">//</span> 作者，会显示在侧边栏以及网站底部</span><br><span class="line">language: zh-CN <span class="regexp">//</span> 语言</span><br><span class="line">timezone: <span class="string">'Asia/Shanghai'</span> <span class="regexp">//</span> 时区</span><br><span class="line"></span><br><span class="line">url: <span class="regexp">//</span> 填写博客站点的地址即可</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Site</span></span><br><span class="line">title: <span class="regexp">//</span> 网站标题</span><br><span class="line">subtitle: <span class="regexp">//</span> 子标题，在主页显示，看起来的效果更像一个签名</span><br><span class="line">description: <span class="regexp">//</span> 在侧边栏显示，效果也像是签名</span><br><span class="line">keywords: <span class="regexp">//</span> 网站关键字</span><br><span class="line">author: <span class="regexp">//</span> 作者，会显示在侧边栏以及网站底部</span><br><span class="line">language: zh-CN <span class="regexp">//</span> 语言</span><br><span class="line">timezone: <span class="string">&#x27;Asia/Shanghai&#x27;</span> <span class="regexp">//</span> 时区</span><br><span class="line"></span><br><span class="line">url: <span class="regexp">//</span> 填写博客站点的地址即可</span><br></pre></td></tr></table></figure>
 <p>基础配置大致如此，更多的配置含义及细节，随后更新。</p>
 <h2 id="豁然开朗篇">豁然开朗篇</h2>
 <p>这篇博客陆陆续续用了三个工作日的安静夜晚才完成，导致写到此处时竟忘记了豁然开朗在哪里，忘记了原本想表述在此的内容，可见</p>
@@ -419,480 +552,6 @@
         <tag>Github Pages</tag>
         <tag>Hexo</tag>
         <tag>NexT主题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>基于Github Pages + NexT主题的个性化配置</title>
-    <url>/personalize-my-site/</url>
-    <content><![CDATA[<blockquote>
-<p>本文详细介绍了Github Pages + Hexo框架 + NexT主题的个性化配置，涉及到网站基本信息、评论系统、Google/Bing收录等内容。</p>
-</blockquote>
-<h2 id="前言">前言</h2>
-<p>书接上文，站点部署完成之后，剩下的重中之重便是网站的配置了。诸如网站基本信息之类的配置，在第一篇博客已经简单介绍，这些配置往往在部署完成之后就会修改，不然无法体现出作者本人的资料，也就谈不上部署完成。剩下的便是很多个性化的配置，这里才是本人以及多数人重点关注的内容，所以单开一篇，记录自己DIY的过程以及一点点心得。</p>
-<span id="more"></span>
-<blockquote>
-<p>既面向大众，尽微薄之力；也记录下来，和记忆妥协。（时间久了真的会忘···）</p>
-</blockquote>
-<p>首先重新明确一个前提，使用的是Hexo框架+NexT主题，在本地站点相关的目录下会有两个配置文件<code>_config.yml</code>，其中一个位于init hexo框架的目录下，称之为<strong>站点配置文件</strong>；另一个位于框架目录下的*themes/next/*目录下，称之为<strong>主题配置文件</strong>。相比之下，<strong>站点配置文件</strong>在外层目录，主题配置文件在内层目录，希望这个描述可以清晰你对配置文件的不同之处，避免混淆。</p>
-<h2 id="配置博客">配置博客</h2>
-<h3 id="总体原则">总体原则</h3>
-<p>配置博客的一个<strong>总体原则就是了解配置文件中各项配置的具体含义，基于自己的理解修改成想要的配置，并善用hexo的本地服务进行调试，灵活修改</strong>。总的来说，是一件耗时且枯燥的工作，所以直接搜索相关的配置博客是一个很好的选择。</p>
-<p>当然，如我这般，搜到的博客都是若干年前发表的，NexT版本的不一致导致很多配置都不能直接适用，所以我只好尽可能的了解各项配置的含义，慢慢完善成自己想要的效果。</p>
-<blockquote>
-<p>如果你如我一般，请参考上面的思路，慢慢配置。</p>
-</blockquote>
-<h3 id="具体配置">具体配置</h3>
-<ul>
-<li>
-<p>取消网站底部的强力驱动字样</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索powered，设为false即可</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Powered by Hexo &amp; NexT</span></span><br><span class="line"><span class="comment">## 是否显示网站底部的强力驱动字样</span></span><br><span class="line"><span class="attr">powered:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>增加本地搜索功能</p>
-<ul>
-<li>安装插件，执行 <code>npm install hexo-generator-searchdb --save</code></li>
-<li>修改<strong>站点配置文件</strong>，在其最下方新增如下配置</li>
-</ul>
-<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">search:</span></span><br><span class="line"><span class="symbol">    path:</span> search.xml</span><br><span class="line"><span class="symbol">    field:</span> post</span><br><span class="line"><span class="symbol">    format:</span> html</span><br><span class="line"><span class="symbol">    limit:</span> <span class="number">10000</span></span><br></pre></td></tr></tbody></table></figure>
-<ul>
-<li>
-<p>修改<strong>主题配置文件</strong>，启用搜索功能</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Local Search</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/theme-next/hexo-generator-searchdb</span></span><br><span class="line"><span class="attr">local_search:</span></span><br><span class="line">  <span class="comment">## 启用</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 设为auto，输入关键词之后自动显示列表</span></span><br><span class="line">  <span class="comment"># If auto, trigger search by changing input.</span></span><br><span class="line">  <span class="comment">## 设为manual，输入关键词之后回车显示列表</span></span><br><span class="line">  <span class="comment"># If manual, trigger search by pressing enter key or search button.</span></span><br><span class="line">  <span class="attr">trigger:</span> <span class="string">auto</span></span><br><span class="line">  <span class="comment"># Show top n results per article, show all results by setting to -1</span></span><br><span class="line">  <span class="attr">top_n_per_article:</span> <span class="number">-1</span></span><br><span class="line">  <span class="comment"># Unescape html strings to the readable one.</span></span><br><span class="line">  <span class="attr">unescape:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Preload the search data when the page loads.</span></span><br><span class="line">  <span class="comment">## 预加载，打开可能会影响加载速度</span></span><br><span class="line">  <span class="attr">preload:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
-<blockquote>
-<p>题外话：似乎在博客数量上去之后，本地搜索的性能会受到影响，NexT提供了一个三方的搜索服务<code>Algolia Search</code>，但是初期似乎没必要安排上。</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li>
-<p>设置侧边栏头像</p>
-<ul>
-<li>
-<p>编辑<strong>主题配置文件</strong>，搜索字段<code>avatar</code></p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">## 设置侧边栏头像</span></span><br><span class="line"><span class="attr">avatar:</span></span><br><span class="line">  <span class="comment"># Replace the default image and set the url here.</span></span><br><span class="line">  <span class="comment">## 选择自己喜欢的图片，保存在相对路径hexo/themes/next/source/images下即可</span></span><br><span class="line">  <span class="attr">url:</span> <span class="string">/images/avatar.gif</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be dispalyed in circle.</span></span><br><span class="line">  <span class="comment">## 设为true，头像会变成圆形，默认是方框</span></span><br><span class="line">  <span class="attr">rounded:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be rotated with the cursor.</span></span><br><span class="line">  <span class="comment">## 设为true，鼠标触碰到时头像框会旋转</span></span><br><span class="line">  <span class="attr">rotated:</span> <span class="literal">false</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>设置网站图标（浏览器标签页显示的小图标）</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索<code>favicon</code>字段</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">favicon:</span><br><span class="line">  <span class="comment">## 主要是这两个，不同尺寸</span></span><br><span class="line">  small: <span class="regexp">/images/</span>favicon-<span class="number">16</span>x16-<span class="keyword">next</span>.png</span><br><span class="line">  medium: <span class="regexp">/images/</span>favicon-<span class="number">32</span>x32-<span class="keyword">next</span>.png</span><br><span class="line">  <span class="comment">## 这两个也做了替换，但没有验证效果</span></span><br><span class="line">  apple_touch_icon: <span class="regexp">/images/</span>apple-touch-icon-<span class="keyword">next</span>.png</span><br><span class="line">  safari_pinned_tab: <span class="regexp">/images/</span>logo.svg</span><br><span class="line">  <span class="comment">#android_manifest: /images/manifest.json</span></span><br><span class="line">  <span class="comment">#ms_browserconfig: /images/browserconfig.xml</span></span><br></pre></td></tr></tbody></table></figure>
-<p>可以看到有不同类型的图标，可以从网站下载或制作自己喜欢的图标，替换对应的源文件即可。（推荐一个图标素材站点：<a href="https://www.iconfont.cn/">iconfont</a>）</p>
-</li>
-</ul>
-</li>
-<li>
-<p>修改文章底部的标签样式，#改为图标</p>
-<ul>
-<li>在<strong>主题配置文件</strong>中搜索<code>tag_icon</code>，将其置为true即可</li>
-</ul>
-</li>
-<li>
-<p>设置建站时间</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索<code>since</code>，取消注释修改其值即可</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">footer:</span></span><br><span class="line">  <span class="comment"># Specify the date when the site was setup. If not defined, current year will be used.</span></span><br><span class="line">  <span class="attr">since:</span> <span class="number">2023</span></span><br><span class="line">  <span class="string">···</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>首页截断设置</p>
-<ul>
-<li>
-<p>首推的方法是在文章合适的位置手动添加<code>&lt;!-- more --&gt;</code>，这样就可以生成截断效果了</p>
-</li>
-<li>
-<p>在<strong>主题配置文件</strong>中，搜索excerpt_description，实际效果未经过测试</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Automatically excerpt description in homepage as preamble text.</span></span><br><span class="line"><span class="comment">## 首页截断设置，本地实测如果文章中添加了&lt;!-- more --&gt;，这个设为false也不会影响截断效果</span></span><br><span class="line"><span class="attr">excerpt_description:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Read more button</span></span><br><span class="line"><span class="comment"># If true, the read more button will be displayed in excerpt section.</span></span><br><span class="line"><span class="attr">read_more_btn:</span> <span class="literal">true</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>增加代码复制按钮</p>
-<ul>
-<li>
-<p><strong>主题配置文件</strong>中搜索copy_button，设置为true即可</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">codeblock:</span></span><br><span class="line">  <span class="comment"># Code Highlight theme</span></span><br><span class="line">  <span class="comment"># Available values: normal | night | night eighties | night blue | night bright | solarized | solarized dark | galactic</span></span><br><span class="line">  <span class="comment"># See: https://github.com/chriskempson/tomorrow-theme</span></span><br><span class="line">  <span class="comment">## 选择代码风格</span></span><br><span class="line">  <span class="attr">highlight_theme:</span> <span class="string">normal</span></span><br><span class="line">  <span class="comment"># Add copy button on codeblock</span></span><br><span class="line">  <span class="attr">copy_button:</span></span><br><span class="line">    <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Show text copy result.</span></span><br><span class="line">    <span class="comment">## 显示复制结果</span></span><br><span class="line">    <span class="attr">show_result:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Available values: default | flat | mac</span></span><br><span class="line">    <span class="comment">## 风格，mac风格好像挺奇怪的</span></span><br><span class="line">    <span class="attr">style:</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>这里顺便也贴一下代码风格的设置方法。如上中注释<em>highlight_theme</em></p>
-</li>
-</ul>
-</li>
-<li>
-<p>增加网站访客人数和阅读量</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索busuanzi_count，将其启用</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Show Views / Visitors of the website / page with busuanzi.</span></span><br><span class="line"><span class="comment"># Get more information on http://ibruce.info/2015/04/04/busuanzi</span></span><br><span class="line"><span class="attr">busuanzi_count:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 总访客以及图标</span></span><br><span class="line">  <span class="attr">total_visitors:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_visitors_icon:</span> <span class="string">fa</span> <span class="string">fa-user</span></span><br><span class="line">  <span class="comment">## 总访问次数及图标</span></span><br><span class="line">  <span class="attr">total_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br><span class="line">  <span class="comment">## 文章阅读量及图标</span></span><br><span class="line">  <span class="attr">post_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">post_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br></pre></td></tr></tbody></table></figure>
-<p>另外，本地验证时发现数字很抽象，部署之后查看会正常。</p>
-<blockquote>
-<p>另外，目前busuanzi还无法重置访客和访问次数</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li>
-<p>永久链接格式</p>
-<ul>
-<li>
-<p>在<strong>站点配置文件</strong>中搜索permalink</p>
-<figure class="highlight elixir"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">permalink:</span> <span class="symbol">:title/</span></span><br><span class="line"><span class="symbol">permalink_defaults:</span> <span class="symbol">:year/</span><span class="symbol">:month/</span><span class="symbol">:day/</span><span class="symbol">:title/</span></span><br></pre></td></tr></tbody></table></figure>
-<p>默认文章的链接是年+月+日+标题的，可以修改成只有标题，似乎这样可以优化<a href="https://www.google.com.hk/search?q=seo%E6%98%AF%E4%BB%80%E4%B9%88&amp;oq=seo&amp;aqs=chrome.1.69i57j0i512j46i340i512l2j69i60l2j69i65j69i61.2595j0j7&amp;sourceid=chrome&amp;ie=UTF-8">SEO</a></p>
-</li>
-</ul>
-</li>
-<li>
-<p>设置页面加载时顶部进度条</p>
-<ul>
-<li>
-<p>在主题配置文件中搜索pace，enable设为true，在theme处选择具体的风格</p>
-<figure class="highlight coq"><table><tbody><tr><td class="code"><pre><span class="line">pace:</span><br><span class="line">  enable: true</span><br><span class="line">  # Themes list:</span><br><span class="line">  # big-counter | <span class="type">bounce</span> | <span class="type">barber</span>-shop | <span class="type">center</span>-atom | <span class="type">center</span>-circle | <span class="type">center</span>-radar | <span class="type">center</span>-<span class="built_in">simple</span></span><br><span class="line">  # corner-indicator | <span class="type">fill</span>-<span class="built_in">left</span> | <span class="type">flat</span>-<span class="built_in">top</span> | <span class="type">flash</span> | <span class="type">loading</span>-bar | <span class="type">mac</span>-osx | <span class="type">material</span> | <span class="type">minimal</span></span><br><span class="line">  theme: minimal</span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>下载插件，参考<a href="https://github.com/theme-next/theme-next-pace">pace官方</a>执行以下命令：</p>
-<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> themes/next</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">_config.yml  crowdin.yml  docs  gulpfile.js  languages  layout  LICENSE.md  package.json  README.md  scripts  source</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/theme-next/theme-next-pace <span class="built_in">source</span>/lib/pace</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>Google收录博客网站</strong></p>
-<blockquote>
-<p>一个比较关键的配置。由于依旧是无图模式，所以只能尽可能的用文字描述清楚。且由于时间过的比较久，也无法完全重新跑一次流程，所以有些地方还是有点模糊的。如有问题，<strong>欢迎留言</strong>。</p>
-<p>另外做完这些操作之后，google收录还是会需要两三天的时间，所以再心急也只能安稳等着。</p>
-</blockquote>
-<ul>
-<li>
-<p>查看是否已被收录，在地址栏输入：<code>site:http://xxxx.github.io</code>，如果能显示出自己站点的网页，说明已收录，反之则需要手动提交。</p>
-<blockquote>
-<p>一般新站是不会被收录的，如果不主动提交，理论上有足够多的高质量外链，是有可能被Google主动收录的。</p>
-</blockquote>
-</li>
-<li>
-<p>进入Google Web Master <a href="https://www.google.com/webmasters/tools/home?hl=zh-CN">Search Console</a> 并登录，一般都是谷歌账号直接登录的</p>
-</li>
-<li>
-<p>登陆之后找到添加资源的地方，资源类型选择第二种：<strong>网址前缀</strong></p>
-</li>
-<li>
-<p>输入自己的地址之后点击继续，会弹出一个验证所有权的窗口。<strong>切记不要关闭网页</strong>。</p>
-</li>
-<li>
-<p>验证方法有很多种，这里推荐选择第二种：<strong>HTML标记</strong></p>
-</li>
-<li>
-<p>此方法会给出一串HTML代码，例如：</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">&lt;meta name=<span class="string">"google-site-verification"</span> content=<span class="string">"rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg"</span> /&gt;</span><br><span class="line"><span class="regexp">//</span> NOTE: 这是我随机输入的网址生成的标记，请务必使用自己站点生成的代码</span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>此时有两种方法：</p>
-<ul>
-<li>
-<p>如果是NexT主题，在<strong>主题配置文件</strong>中搜索<code>google_site_verification</code>，并将HTML代码content的内容填上去。</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="regexp">//</span> 举例！</span><br><span class="line"><span class="comment"># Google Webmaster tools verification.</span></span><br><span class="line"><span class="comment"># See: https://www.google.com/webmasters</span></span><br><span class="line">google_site_verification:rMF1JqbmMsHu2M1zSLQ482HWMOd8u-<span class="number">4</span>z-zWViLWMXHg</span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>其他情况，可以手动将改代码添加至swig文件中，打开<em>themes/next/layout/_partials/head/head.swig</em> 文件，在其中添加生成的代码。我添加在了第二行，如下所示：</p>
-<figure class="highlight routeros"><table><tbody><tr><td class="code"><pre><span class="line">&lt;meta <span class="attribute">charset</span>=<span class="string">"UTF-8"</span>&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">"google-site-verification"</span> <span class="attribute">content</span>=<span class="string">"rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg"</span> /&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">"viewport"</span> <span class="attribute">content</span>=<span class="string">"width=device-width, initial-scale=1, maximum-scale=2"</span>&gt;</span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>添加完成之后，需要执行<code>hexo clean &amp;&amp; hexo g -d</code>部署</p>
-</li>
-<li>
-<p>部署完成之后打开博客网站，鼠标右键查看网页源代码，此时在源代码中应该可以搜到我们添加的代码的。</p>
-<blockquote>
-<p>如果没搜到，可以考虑稍作等待，多刷新几次页面，重新查看源代码；或检查上述步骤</p>
-</blockquote>
-</li>
-<li>
-<p>成功搜到之后，回到验证所有权的网页，点击验证。</p>
-</li>
-<li>
-<p>验证成功之后应该就会跳转到控制台的主页啦</p>
-</li>
-</ul>
-</li>
-<li>
-<p>添加站点地图</p>
-<p>添加完谷歌收录之后，紧接着就要上传网站的站点地图。</p>
-<ul>
-<li>
-<p>首先是需要安装插件，在终端执行cmd</p>
-<figure class="highlight ada"><table><tbody><tr><td class="code"><pre><span class="line">npm install hexo-generator-sitemap <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>在<strong>站点配置文件</strong>中，添加如下配置。我是在文件末尾添加的。</p>
-<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta"># 站点地图</span></span><br><span class="line"><span class="symbol">sitemap:</span></span><br><span class="line"><span class="symbol">    path:</span> sitemap.xml</span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>执行<code>hexo clean &amp;&amp; hexo g</code>重新生成后就可以在<code>public</code>目录下看到<code>sitemap.xml</code>文件了。</p>
-</li>
-<li>
-<p>回到<code>Google Search Console</code>，在左侧的菜单中选择站点地图，输入我们生成的站点地图<code>sitemap.xml</code>即可</p>
-<blockquote>
-<p>默认是已经有博客的地址了的，也就是已经显示了**<a href="https://treeknows.github.io/**%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AA%E9%9C%80%E8%A6%81%E5%9C%A8%E8%BE%93%E5%85%A5%E6%A1%86%E4%B8%AD%E8%BE%93%E5%85%A5%60sitemap.xml%60%E5%B9%B6%E7%82%B9%E5%87%BB%E6%8F%90%E4%BA%A4%E5%8D%B3%E5%8F%AF%E3%80%82">https://treeknows.github.io/**，我们只需要在输入框中输入`sitemap.xml`并点击提交即可。</a></p>
-<p>NOTE：刚添加完站点地图，下面的状态显示的可能不是<strong>成功</strong>，同样需要等待数天，才会更新状态。</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li>
-<p>谷歌分析</p>
-<blockquote>
-<p>Google Analytics（GA）挺高级的，需要一定的学习成本。如果对站点SEO感兴趣，可以多多学习以下</p>
-</blockquote>
-<ul>
-<li>
-<p>首先要创建账号，前往<a href="https://analytics.google.com/">Google 分析</a>创建账号及媒体资源。</p>
-</li>
-<li>
-<p>没记错的话，用谷歌账号是可以直接登陆的</p>
-</li>
-<li>
-<p>登陆之后创建账号，账号名称没有特别的要求</p>
-</li>
-<li>
-<p>所有都创建完成之后会生成一个<code>衡量 ID</code>，格式如<code>G-8W35JPL36V</code></p>
-</li>
-<li>
-<p>在<strong>主题配置文件</strong>中，搜索<code>google_analytics</code>，并填写上述的ID</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Google Analytics</span></span><br><span class="line"><span class="attr">google_analytics:</span></span><br><span class="line">  <span class="string">//</span> <span class="string">!!!此处填写</span></span><br><span class="line">  <span class="attr">tracking_id:</span> <span class="string">G-8W35JPL36V</span></span><br><span class="line">  <span class="comment"># By default, NexT will load an external gtag.js script on your site.</span></span><br><span class="line">  <span class="comment"># If you only need the pageview feature, set the following option to true to get a better performance.</span></span><br><span class="line">  <span class="attr">only_pageview:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>重新生成部署之后应该就可以啦</p>
-</li>
-</ul>
-</li>
-<li>
-<p>Bing收录</p>
-<p>Bing收录的过程类似于Google收录，甚至如果Google收录已经做完，Bing可以直接使用google账号登陆，直接导入Google Search Console的内容，非常方便</p>
-<ul>
-<li>点击<a href="https://www.bing.com/webmasters/home">Bing Webmaster Tools</a>开始提交站点</li>
-<li>忘记是要先登录还是直接可以添加站点了，总之找到添加站点的地方选择<strong>从 GSC 导入你的网站</strong>，之后可能需要验证以下google账号之类的，然后就一键导入了</li>
-<li>记得看下站点地图需不需要手动添加</li>
-</ul>
-<blockquote>
-<p>时间久了导致描述比较模糊，遇到问题可以留言。</p>
-</blockquote>
-</li>
-<li>
-<p>百度收录</p>
-<p>如果没有自己注册域名的话，百度是不可能收录Github Pages的，因为Github把百度的爬虫禁用了，所以如果希望百度可以搜索到自己的博客站点，需要购买域名并和Github Pages绑定一下，详细步骤自行Google。</p>
-<p>对于我来说，添加一个google就足够了，毕竟行业相关，科学上网是难不倒大家的。</p>
-</li>
-<li>
-<p>创建关于我、分类页面</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索<code>menu</code>可以设置站点首页显示的菜单，如下</p>
-<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">menu:</span></span><br><span class="line"><span class="symbol">  home:</span> / || fa fa-home</span><br><span class="line">  <span class="meta">#tags: /tags/ || fa fa-tags</span></span><br><span class="line"><span class="symbol">  archives:</span> <span class="keyword">/archives/</span> || fa fa-archive</span><br><span class="line"><span class="symbol">  categories:</span> <span class="keyword">/categories/</span> || fa fa-th</span><br><span class="line"><span class="symbol">  about:</span> <span class="keyword">/about/</span> || fa fa-user</span><br><span class="line">  <span class="meta">#schedule: /schedule/ || fa fa-calendar</span></span><br><span class="line">  <span class="meta">#sitemap: /sitemap.xml || fa fa-sitemap</span></span><br><span class="line">  <span class="meta">#commonweal: /404/ || fa fa-heartbeat</span></span><br></pre></td></tr></tbody></table></figure>
-<p>我这边打开了<strong>分类</strong>和<strong>关于</strong>两个界面，此时本地验证的话，可以发现首页已经有相关的菜单栏，但是点进去会报<code>not found</code>，需要我们手动创建相关的页面。</p>
-</li>
-<li>
-<p>在hexo目录下，打开终端，执行以下命令</p>
-<figure class="highlight haxe"><table><tbody><tr><td class="code"><pre><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> categories</span><br><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> about</span><br></pre></td></tr></tbody></table></figure>
-<p>执行之后，会在<em>hexo/source/<em>目录下生成两个新的目录</em>about</em>和<em>categories</em>，两个目录下都会生成一个<code>index.md</code>文件，这个便是我们的页面了</p>
-</li>
-<li>
-<p><em>categories</em>目录下的<code>index.md</code>只需要修改类型即可，其内容会根据我们每篇博客中设定的分类自动生成</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment">#title: Blog Categories</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:36:03</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p><em>about</em>目录下的<code>index.md</code>除了需要修改类型，还需要我们手动添加内容，就像写一篇博客一样。</p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">About</span> <span class="string">Me</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:35:50</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="string">CONTENT</span></span><br><span class="line"><span class="string">······</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>添加评论系统 <code>Gitalk</code></p>
-<ul>
-<li>
-<p>登录 <strong>Github</strong> ，右键头像，在下拉菜单中，选择“<strong>Settings</strong>”选项</p>
-</li>
-<li>
-<p>在左侧菜单选择“<strong>Developer settings</strong>”选项，进入开发者页面</p>
-</li>
-<li>
-<p>选择 <strong>OAuth Apps</strong> ，并点击“<strong>New OAuth App</strong>”创建新授权应用</p>
-</li>
-<li>
-<p>设置该应用相关信息，其中</p>
-<ul>
-<li>Application name为应用名称，如<code>博客评论</code></li>
-<li>Homepage URL为博客主页，需要和自己的博客一致</li>
-<li>Authorization callback URL 授权回调页面（同 Homepage URL）</li>
-</ul>
-</li>
-<li>
-<p>点击创建应用，进入新的页面</p>
-</li>
-<li>
-<p>在新页面的<strong>Clients secrets</strong>处，点击<code>Generate a new client secret</code>，可能需要验证密码才能生成。</p>
-</li>
-<li>
-<p>保存生成的client secret和 client id，后续要用到</p>
-</li>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索<code>gitalk</code>，配置如下：</p>
-<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Gitalk</span></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="regexp">//</span> 启用</span><br><span class="line">  enable: true</span><br><span class="line">  <span class="regexp">//</span> github用户名</span><br><span class="line">  github_id: treeknows</span><br><span class="line">  <span class="regexp">//</span> 在哪个仓库下，推荐博客所在的仓库</span><br><span class="line">  repo: treeknows.github.io</span><br><span class="line">  <span class="regexp">//</span> 刚刚保存的ID</span><br><span class="line">  client_id: <span class="number">22</span>fb59ff85c3aef2677a</span><br><span class="line">  <span class="regexp">//</span> 刚刚生成的secret</span><br><span class="line">  client_secret: <span class="number">246142</span>feb132313b08ee3ff55678c88244b67b97</span><br><span class="line">  <span class="regexp">//</span> Github用户名</span><br><span class="line">  admin_user: treeknows</span><br><span class="line">  <span class="comment">## 点击评论框时会不会变黑，说实话true了不太好看</span></span><br><span class="line">  distraction_free_mode: false <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk's display language depends on user's browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language:</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>参考注释进行配置。选择<code>repo</code>时要注意，<code>repo</code>应该是public的，否则评论是无法使用的。这也就是为什么在第一篇博客中，推荐将博客所在的仓库设为public而不是private，就是为了此时的方便。</p>
-</li>
-<li>
-<p>在<strong>主题配置文件</strong>中，搜索<code>comments</code>，激活gitalk</p>
-<figure class="highlight nestedtext"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line"><span class="attribute">comments</span><span class="punctuation">:</span></span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  <span class="attribute">style</span><span class="punctuation">:</span> <span class="string">tabs</span></span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  <span class="attribute">// !!! 选择gitalk</span></span><br><span class="line"><span class="attribute">  active</span><span class="punctuation">:</span> <span class="string">gitalk</span></span><br></pre></td></tr></tbody></table></figure>
-</li>
-<li>
-<p>执行<code>hexo clean &amp;&amp; hexo g -d</code>重新生成并部署，打开博客选择一篇文章查看效果。</p>
-</li>
-<li>
-<p>注意，第一次使用评论系统是需要进行一个初始化的，似乎只需要验证一下github账号即可，比较简单。在之后的post了新文章后，自测是不需要再次手动初始化的。（但是网上说依旧需要手动初始化😶</p>
-</li>
-</ul>
-</li>
-<li>
-<p>增加版权信息</p>
-<ul>
-<li>
-<p>在<strong>主题配置文件</strong>中搜索<code>creative_commons</code></p>
-<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">creative_commons:</span></span><br><span class="line">  <span class="attr">license:</span> <span class="string">by-nc-sa</span></span><br><span class="line">  <span class="comment">## 在侧边栏显示一个协议的图标</span></span><br><span class="line">  <span class="attr">sidebar:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment">## 文章底部显示版权信息</span></span><br><span class="line">  <span class="attr">post:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">language:</span></span><br></pre></td></tr></tbody></table></figure>
-<p>将<code>post</code>设置为true，重新生成即可。</p>
-</li>
-</ul>
-</li>
-<li>
-<p>图床选择</p>
-<ul>
-<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的博客，迫使自己尽快掌握图床的使用🤡</li>
-</ul>
-</li>
-<li>
-<p>添加深色模式 - updated on 2023.10.17</p>
-<ul>
-<li>
-<p>NexT 8.x原生已经支持暗黑模式，需要在<strong>主题配置文件</strong>中搜索<code>darkmode</code>，设置为true即可。但是这种配置方式没有切换按钮，默认根据系统偏好决定是否启动暗黑模式。</p>
-</li>
-<li>
-<p>NexT 7.x / 8.x 自动添加可切换的深色模式</p>
-<ul>
-<li>安装<code>hexo-next-darkmode</code>插件</li>
-</ul>
-<figure class="highlight lua"><table><tbody><tr><td class="code"><pre><span class="line">npm install hexo-<span class="built_in">next</span>-darkmode <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
-<ul>
-<li>配置Hexo插件，在<strong>主题配置文件</strong>中，添加如下内容：</li>
-</ul>
-<figure class="highlight clean"><table><tbody><tr><td class="code"><pre><span class="line"># Darkmode JS</span><br><span class="line"># For more information: https:<span class="comment">//github.com/rqh656418510/hexo-next-darkmode, https://github.com/sandoche/Darkmode.js</span></span><br><span class="line">darkmode_js:</span><br><span class="line">  enable: true</span><br><span class="line">  ## 距离底部的距离</span><br><span class="line">  bottom: <span class="string">'32px'</span> # default: <span class="string">'32px'</span></span><br><span class="line">  ## 距离右边的距离</span><br><span class="line">  right: <span class="string">'32px'</span> # default: <span class="string">'32px'</span></span><br><span class="line">  left: <span class="string">'unset'</span> # default: <span class="string">'unset'</span></span><br><span class="line">  time: <span class="string">'0.5s'</span> # default: <span class="string">'0.3s'</span></span><br><span class="line">  mixColor: <span class="string">'transparent'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  backgroundColor: <span class="string">'transparent'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  buttonColorDark: <span class="string">'#100f2c'</span> # default: <span class="string">'#100f2c'</span></span><br><span class="line">  buttonColorLight: <span class="string">'#fff'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  ## 默认激活</span><br><span class="line">  isActivated: false # default false</span><br><span class="line">  ## 保存状态到cookies</span><br><span class="line">  saveInCookies: true # default: true</span><br><span class="line">  label: <span class="string">'🌓'</span> # default: <span class="string">''</span></span><br><span class="line">  ## 自动匹配系统主题</span><br><span class="line">  autoMatchOsTheme: true # default: true</span><br><span class="line">  libUrl: # Set custom library cdn url for Darkmode.js</span><br></pre></td></tr></tbody></table></figure>
-<blockquote>
-<p><code>isActivated: true</code>：默认激活暗黑/夜间模式，请始终与 <code>saveInCookies: false</code>、<code>autoMatchOsTheme: false</code> 一起使用</p>
-</blockquote>
-<ul>
-<li>确保NexT原生的<code>darkmode</code>选项设置为<code>false</code></li>
-</ul>
-<p>效果展示：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG" alt="暗黑模式效果展示"></p>
-<blockquote>
-<p>深色模式参考博客：<a href="https://blog.csdn.net/rqh656418510/article/details/123676457">https://blog.csdn.net/rqh656418510/article/details/123676457</a></p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li>
-<p>Blog支持emoji表情 - updated on 2024.01.04</p>
-<p>想要在文章中使用emoji表情已知的方法有两种：</p>
-<ul>
-<li>
-<p>复制emoji表情直接粘贴在Typora中，以这种方式贴的emoji可以直接在Blog网站里渲染出来，缺点是寻找表情比较麻烦。</p>
-<p><a href="https://www.emojiall.com/zh-hans">一个emoji表情网站</a></p>
-</li>
-<li>
-<p>此外，Typora支持直接输入emoji表情，其格式为<code>:emoji_code:</code>，例如<code>:smile:</code>对应<span class="github-emoji"><span>😄</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span>。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。</p>
-<p><strong>参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。</strong></p>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="总结">总结</h2>
-<p>到这里，配置相关的介绍基本就结束了，可能会有一些没有涉及到的小修改，可以参考我博客源码中的配置文件：<a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/_config.yml">站点配置文件</a> &amp; <a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/themes/next/_config.yml">主题配置文件</a>，里面会有一部分的中文注释，帮助理解。</p>
-<p>另外，如果觉得我的博客风格还不错，又不想浪费过多的时间配置，似乎可以直接clone我的<a href="https://github.com/treeknows/treeknows.github.io.git">博客源码</a>，修改一些关键信息为自己的信息，实现极速建站。</p>
-<p>大致需要的步骤可能为：</p>
-<ol>
-<li>Fork我的仓库</li>
-<li>修改仓库名字为自己的<code>username.github.io</code></li>
-<li>clone到本地</li>
-<li>修改<strong>站点配置文件</strong>中部署相关的的配置，搜索<code>deploy</code></li>
-<li>修改基本信息，如网站title、头像之类的</li>
-<li>删除我为数不多的博客</li>
-<li>GA &amp; Gitalk等换成自己的id</li>
-<li>提交自己新的站点到Google Search Console</li>
-<li>尝试部署</li>
-</ol>
-<p>只脑补到这些，未经验证，不包成功哈🙄</p>
-]]></content>
-      <categories>
-        <category>博客搭建</category>
-      </categories>
-      <tags>
-        <tag>经验</tag>
-        <tag>Github Pages</tag>
-        <tag>Hexo</tag>
-        <tag>NexT主题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android禁用自动休眠和锁屏</title>
-    <url>/Disable-Screen-Lock-In-Android/</url>
-    <content><![CDATA[<blockquote>
-<p>考古以前放在有道的笔记，仅作记录</p>
-</blockquote>
-<h4 id="休眠">休眠</h4>
-<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
-<span id="more"></span>
-<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
-<p>具体的流程分析，// TODO</p>
-<p>先帖两篇相关的博客：<a href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
-<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
-<figure class="highlight gradle"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<h4 id="锁屏">锁屏</h4>
-<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
-<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
-<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
-<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> {                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">"lockscreen.disabled"</span>;</span><br></pre></td></tr></tbody></table></figure>
-<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
-<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
-<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
-<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
-<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
-<figure class="highlight typescript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    } <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) {</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    }    </span><br><span class="line">}        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) {                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) {</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">"lock_settings"</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    }                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">}                     </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
-<figure class="highlight reasonml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">"1"</span>)<span class="operator"> || </span>value.equals(<span class="string">"true"</span>));</span><br><span class="line">}               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> {      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">"1"</span> : <span class="string">"0"</span>;</span><br><span class="line">        } finally {</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        }          </span><br><span class="line">    }              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) {</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">}              </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
-<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
-<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
-<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> {                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() {</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> {         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">"ro.lockscreen.disable.default"</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) {                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">"1"</span>, <span class="number">0</span>);</span><br><span class="line">            }                                               </span><br><span class="line">        }                                                   </span><br><span class="line">    });                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">}                                                           </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
-<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
-<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
-<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">"ro.build.keys=<span class="variable">$BUILD_KEYS</span>"</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">"<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">"ro.lockscreen.disable.default=true"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>"</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
-<blockquote>
-<p>血与泪的教训：-(</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>Framework</category>
-      </categories>
-      <tags>
-        <tag>经验</tag>
-        <tag>Android Framework</tag>
       </tags>
   </entry>
   <entry>
@@ -1046,13 +705,13 @@
 <tbody>
 <tr>
 <td>优势</td>
-<td>快速响应<br>不受成像质量影响<br>角速度普遍比较准确</td>
+<td>快速响应<br />不受成像质量影响<br />角速度普遍比较准确</td>
 <td>不产生漂移</td>
 </tr>
 <tr>
 <td>劣势</td>
-<td>存在零偏<br>低精度IMU积分位姿发散</td>
-<td>受图像遮挡、运动物体干扰<br>快速移动时易丢失</td>
+<td>存在零偏<br />低精度IMU积分位姿发散</td>
+<td>受图像遮挡、运动物体干扰<br />快速移动时易丢失</td>
 </tr>
 </tbody>
 </table>
@@ -1106,13 +765,13 @@
 <thead>
 <tr>
 <th>绝对位姿误差</th>
-<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br>最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
+<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br />最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>相对位姿误差</td>
-<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br>最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
+<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br />最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
 </tr>
 <tr>
 <td>漂移/draft</td>
@@ -1120,7 +779,7 @@
 </tr>
 <tr>
 <td>抖动/jitter</td>
-<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br>最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
+<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br />最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
 </tr>
 <tr>
 <td>延迟</td>
@@ -1167,7 +826,7 @@
 <p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
 <hr>
 <blockquote>
-<p>总的来讲，行文断断续续，越断越爽，越续越差。<span class="github-emoji"><span>😑</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f611.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span></p>
+<p>总的来讲，行文断断续续，越断越爽，越续越差。:expressionless:</p>
 </blockquote>
 ]]></content>
       <categories>
@@ -1179,89 +838,429 @@
       </tags>
   </entry>
   <entry>
-    <title>Github + PicGo + Typora搭建图床</title>
-    <url>/how-to-insert-image-into-blog/</url>
-    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
-<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
-<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+    <title>基于Github Pages + NexT主题的个性化配置</title>
+    <url>/personalize-my-site/</url>
+    <content><![CDATA[<blockquote>
+<p>本文详细介绍了Github Pages + Hexo框架 + NexT主题的个性化配置，涉及到网站基本信息、评论系统、Google/Bing收录等内容。</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<p>书接上文，站点部署完成之后，剩下的重中之重便是网站的配置了。诸如网站基本信息之类的配置，在第一篇博客已经简单介绍，这些配置往往在部署完成之后就会修改，不然无法体现出作者本人的资料，也就谈不上部署完成。剩下的便是很多个性化的配置，这里才是本人以及多数人重点关注的内容，所以单开一篇，记录自己DIY的过程以及一点点心得。</p>
 <span id="more"></span>
-<h2 id="Github">Github</h2>
-<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
-<h2 id="PicGo">PicGo</h2>
-<h3 id="下载">下载</h3>
-<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
-<h3 id="配置">配置</h3>
-<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<blockquote>
+<p>既面向大众，尽微薄之力；也记录下来，和记忆妥协。（时间久了真的会忘···）</p>
+</blockquote>
+<p>首先重新明确一个前提，使用的是Hexo框架+NexT主题，在本地站点相关的目录下会有两个配置文件<code>_config.yml</code>，其中一个位于init hexo框架的目录下，称之为<strong>站点配置文件</strong>；另一个位于框架目录下的*themes/next/*目录下，称之为<strong>主题配置文件</strong>。相比之下，<strong>站点配置文件</strong>在外层目录，主题配置文件在内层目录，希望这个描述可以清晰你对配置文件的不同之处，避免混淆。</p>
+<h2 id="配置博客">配置博客</h2>
+<h3 id="总体原则">总体原则</h3>
+<p>配置博客的一个<strong>总体原则就是了解配置文件中各项配置的具体含义，基于自己的理解修改成想要的配置，并善用hexo的本地服务进行调试，灵活修改</strong>。总的来说，是一件耗时且枯燥的工作，所以直接搜索相关的配置博客是一个很好的选择。</p>
+<p>当然，如我这般，搜到的博客都是若干年前发表的，NexT版本的不一致导致很多配置都不能直接适用，所以我只好尽可能的了解各项配置的含义，慢慢完善成自己想要的效果。</p>
+<blockquote>
+<p>如果你如我一般，请参考上面的思路，慢慢配置。</p>
+</blockquote>
+<h3 id="具体配置">具体配置</h3>
 <ul>
-<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
-<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
-<li>Token：需要手动创建
+<li>
+<p>取消网站底部的强力驱动字样</p>
 <ul>
-<li>打开Settings</li>
-<li>左侧菜单最下面点击<code>Developer settings</code></li>
-<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
-<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
-<li>将生成的token复制到PicGo的设置里</li>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索powered，设为false即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Powered by Hexo &amp; NexT</span></span><br><span class="line"><span class="comment">## 是否显示网站底部的强力驱动字样</span></span><br><span class="line"><span class="attr">powered:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>增加本地搜索功能</p>
+<ul>
+<li>安装插件，执行 <code>npm install hexo-generator-searchdb --save</code></li>
+<li>修改<strong>站点配置文件</strong>，在其最下方新增如下配置</li>
+</ul>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="symbol">search:</span></span><br><span class="line"><span class="symbol">    path:</span> search.xml</span><br><span class="line"><span class="symbol">    field:</span> post</span><br><span class="line"><span class="symbol">    format:</span> html</span><br><span class="line"><span class="symbol">    limit:</span> <span class="number">10000</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>修改<strong>主题配置文件</strong>，启用搜索功能</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Local Search</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/theme-next/hexo-generator-searchdb</span></span><br><span class="line"><span class="attr">local_search:</span></span><br><span class="line">  <span class="comment">## 启用</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 设为auto，输入关键词之后自动显示列表</span></span><br><span class="line">  <span class="comment"># If auto, trigger search by changing input.</span></span><br><span class="line">  <span class="comment">## 设为manual，输入关键词之后回车显示列表</span></span><br><span class="line">  <span class="comment"># If manual, trigger search by pressing enter key or search button.</span></span><br><span class="line">  <span class="attr">trigger:</span> <span class="string">auto</span></span><br><span class="line">  <span class="comment"># Show top n results per article, show all results by setting to -1</span></span><br><span class="line">  <span class="attr">top_n_per_article:</span> <span class="number">-1</span></span><br><span class="line">  <span class="comment"># Unescape html strings to the readable one.</span></span><br><span class="line">  <span class="attr">unescape:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Preload the search data when the page loads.</span></span><br><span class="line">  <span class="comment">## 预加载，打开可能会影响加载速度</span></span><br><span class="line">  <span class="attr">preload:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>题外话：似乎在博客数量上去之后，本地搜索的性能会受到影响，NexT提供了一个三方的搜索服务<code>Algolia Search</code>，但是初期似乎没必要安排上。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>设置侧边栏头像</p>
+<ul>
+<li>
+<p>编辑<strong>主题配置文件</strong>，搜索字段<code>avatar</code></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment">## 设置侧边栏头像</span></span><br><span class="line"><span class="attr">avatar:</span></span><br><span class="line">  <span class="comment"># Replace the default image and set the url here.</span></span><br><span class="line">  <span class="comment">## 选择自己喜欢的图片，保存在相对路径hexo/themes/next/source/images下即可</span></span><br><span class="line">  <span class="attr">url:</span> <span class="string">/images/avatar.gif</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be dispalyed in circle.</span></span><br><span class="line">  <span class="comment">## 设为true，头像会变成圆形，默认是方框</span></span><br><span class="line">  <span class="attr">rounded:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be rotated with the cursor.</span></span><br><span class="line">  <span class="comment">## 设为true，鼠标触碰到时头像框会旋转</span></span><br><span class="line">  <span class="attr">rotated:</span> <span class="literal">false</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>设置网站图标（浏览器标签页显示的小图标）</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>favicon</code>字段</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">favicon:</span><br><span class="line">  <span class="comment">## 主要是这两个，不同尺寸</span></span><br><span class="line">  small: <span class="regexp">/images/</span>favicon-<span class="number">16</span>x16-<span class="keyword">next</span>.png</span><br><span class="line">  medium: <span class="regexp">/images/</span>favicon-<span class="number">32</span>x32-<span class="keyword">next</span>.png</span><br><span class="line">  <span class="comment">## 这两个也做了替换，但没有验证效果</span></span><br><span class="line">  apple_touch_icon: <span class="regexp">/images/</span>apple-touch-icon-<span class="keyword">next</span>.png</span><br><span class="line">  safari_pinned_tab: <span class="regexp">/images/</span>logo.svg</span><br><span class="line">  <span class="comment">#android_manifest: /images/manifest.json</span></span><br><span class="line">  <span class="comment">#ms_browserconfig: /images/browserconfig.xml</span></span><br></pre></td></tr></table></figure>
+<p>可以看到有不同类型的图标，可以从网站下载或制作自己喜欢的图标，替换对应的源文件即可。（推荐一个图标素材站点：<a href="https://www.iconfont.cn/">iconfont</a>）</p>
+</li>
+</ul>
+</li>
+<li>
+<p>修改文章底部的标签样式，#改为图标</p>
+<ul>
+<li>在<strong>主题配置文件</strong>中搜索<code>tag_icon</code>，将其置为true即可</li>
+</ul>
+</li>
+<li>
+<p>设置建站时间</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>since</code>，取消注释修改其值即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">footer:</span></span><br><span class="line">  <span class="comment"># Specify the date when the site was setup. If not defined, current year will be used.</span></span><br><span class="line">  <span class="attr">since:</span> <span class="number">2023</span></span><br><span class="line">  <span class="string">···</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>首页截断设置</p>
+<ul>
+<li>
+<p>首推的方法是在文章合适的位置手动添加<code>&lt;!-- more --&gt;</code>，这样就可以生成截断效果了</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索excerpt_description，实际效果未经过测试</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Automatically excerpt description in homepage as preamble text.</span></span><br><span class="line"><span class="comment">## 首页截断设置，本地实测如果文章中添加了&lt;!-- more --&gt;，这个设为false也不会影响截断效果</span></span><br><span class="line"><span class="attr">excerpt_description:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Read more button</span></span><br><span class="line"><span class="comment"># If true, the read more button will be displayed in excerpt section.</span></span><br><span class="line"><span class="attr">read_more_btn:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>增加代码复制按钮</p>
+<ul>
+<li>
+<p><strong>主题配置文件</strong>中搜索copy_button，设置为true即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">codeblock:</span></span><br><span class="line">  <span class="comment"># Code Highlight theme</span></span><br><span class="line">  <span class="comment"># Available values: normal | night | night eighties | night blue | night bright | solarized | solarized dark | galactic</span></span><br><span class="line">  <span class="comment"># See: https://github.com/chriskempson/tomorrow-theme</span></span><br><span class="line">  <span class="comment">## 选择代码风格</span></span><br><span class="line">  <span class="attr">highlight_theme:</span> <span class="string">normal</span></span><br><span class="line">  <span class="comment"># Add copy button on codeblock</span></span><br><span class="line">  <span class="attr">copy_button:</span></span><br><span class="line">    <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Show text copy result.</span></span><br><span class="line">    <span class="comment">## 显示复制结果</span></span><br><span class="line">    <span class="attr">show_result:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Available values: default | flat | mac</span></span><br><span class="line">    <span class="comment">## 风格，mac风格好像挺奇怪的</span></span><br><span class="line">    <span class="attr">style:</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>这里顺便也贴一下代码风格的设置方法。如上中注释<em>highlight_theme</em></p>
+</li>
+</ul>
+</li>
+<li>
+<p>增加网站访客人数和阅读量</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索busuanzi_count，将其启用</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Show Views / Visitors of the website / page with busuanzi.</span></span><br><span class="line"><span class="comment"># Get more information on http://ibruce.info/2015/04/04/busuanzi</span></span><br><span class="line"><span class="attr">busuanzi_count:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 总访客以及图标</span></span><br><span class="line">  <span class="attr">total_visitors:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_visitors_icon:</span> <span class="string">fa</span> <span class="string">fa-user</span></span><br><span class="line">  <span class="comment">## 总访问次数及图标</span></span><br><span class="line">  <span class="attr">total_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br><span class="line">  <span class="comment">## 文章阅读量及图标</span></span><br><span class="line">  <span class="attr">post_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">post_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br></pre></td></tr></table></figure>
+<p>另外，本地验证时发现数字很抽象，部署之后查看会正常。</p>
+<blockquote>
+<p>另外，目前busuanzi还无法重置访客和访问次数</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>永久链接格式</p>
+<ul>
+<li>
+<p>在<strong>站点配置文件</strong>中搜索permalink</p>
+<figure class="highlight elixir"><table><tr><td class="code"><pre><span class="line"><span class="symbol">permalink:</span> <span class="symbol">:title/</span></span><br><span class="line"><span class="symbol">permalink_defaults:</span> <span class="symbol">:year/</span><span class="symbol">:month/</span><span class="symbol">:day/</span><span class="symbol">:title/</span></span><br></pre></td></tr></table></figure>
+<p>默认文章的链接是年+月+日+标题的，可以修改成只有标题，似乎这样可以优化<a href="https://www.google.com.hk/search?q=seo%E6%98%AF%E4%BB%80%E4%B9%88&amp;oq=seo&amp;aqs=chrome.1.69i57j0i512j46i340i512l2j69i60l2j69i65j69i61.2595j0j7&amp;sourceid=chrome&amp;ie=UTF-8">SEO</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p>设置页面加载时顶部进度条</p>
+<ul>
+<li>
+<p>在主题配置文件中搜索pace，enable设为true，在theme处选择具体的风格</p>
+<figure class="highlight coq"><table><tr><td class="code"><pre><span class="line">pace:</span><br><span class="line">  enable: true</span><br><span class="line">  # Themes list:</span><br><span class="line">  # big-counter | <span class="type">bounce</span> | <span class="type">barber</span>-shop | <span class="type">center</span>-atom | <span class="type">center</span>-circle | <span class="type">center</span>-radar | <span class="type">center</span>-<span class="built_in">simple</span></span><br><span class="line">  # corner-indicator | <span class="type">fill</span>-<span class="built_in">left</span> | <span class="type">flat</span>-<span class="built_in">top</span> | <span class="type">flash</span> | <span class="type">loading</span>-bar | <span class="type">mac</span>-osx | <span class="type">material</span> | <span class="type">minimal</span></span><br><span class="line">  theme: minimal</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>下载插件，参考<a href="https://github.com/theme-next/theme-next-pace">pace官方</a>执行以下命令：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> themes/next</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">_config.yml  crowdin.yml  docs  gulpfile.js  languages  layout  LICENSE.md  package.json  README.md  scripts  source</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/theme-next/theme-next-pace <span class="built_in">source</span>/lib/pace</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Google收录博客网站</strong></p>
+<blockquote>
+<p>一个比较关键的配置。由于依旧是无图模式，所以只能尽可能的用文字描述清楚。且由于时间过的比较久，也无法完全重新跑一次流程，所以有些地方还是有点模糊的。如有问题，<strong>欢迎留言</strong>。</p>
+<p>另外做完这些操作之后，google收录还是会需要两三天的时间，所以再心急也只能安稳等着。</p>
+</blockquote>
+<ul>
+<li>
+<p>查看是否已被收录，在地址栏输入：<code>site:http://xxxx.github.io</code>，如果能显示出自己站点的网页，说明已收录，反之则需要手动提交。</p>
+<blockquote>
+<p>一般新站是不会被收录的，如果不主动提交，理论上有足够多的高质量外链，是有可能被Google主动收录的。</p>
+</blockquote>
+</li>
+<li>
+<p>进入Google Web Master <a href="https://www.google.com/webmasters/tools/home?hl=zh-CN">Search Console</a> 并登录，一般都是谷歌账号直接登录的</p>
+</li>
+<li>
+<p>登陆之后找到添加资源的地方，资源类型选择第二种：<strong>网址前缀</strong></p>
+</li>
+<li>
+<p>输入自己的地址之后点击继续，会弹出一个验证所有权的窗口。<strong>切记不要关闭网页</strong>。</p>
+</li>
+<li>
+<p>验证方法有很多种，这里推荐选择第二种：<strong>HTML标记</strong></p>
+</li>
+<li>
+<p>此方法会给出一串HTML代码，例如：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">&lt;meta name=<span class="string">&quot;google-site-verification&quot;</span> content=<span class="string">&quot;rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg&quot;</span> /&gt;</span><br><span class="line"><span class="regexp">//</span> NOTE: 这是我随机输入的网址生成的标记，请务必使用自己站点生成的代码</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>此时有两种方法：</p>
+<ul>
+<li>
+<p>如果是NexT主题，在<strong>主题配置文件</strong>中搜索<code>google_site_verification</code>，并将HTML代码content的内容填上去。</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="regexp">//</span> 举例！</span><br><span class="line"><span class="comment"># Google Webmaster tools verification.</span></span><br><span class="line"><span class="comment"># See: https://www.google.com/webmasters</span></span><br><span class="line">google_site_verification:rMF1JqbmMsHu2M1zSLQ482HWMOd8u-<span class="number">4</span>z-zWViLWMXHg</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>其他情况，可以手动将改代码添加至swig文件中，打开<em>themes/next/layout/_partials/head/head.swig</em> 文件，在其中添加生成的代码。我添加在了第二行，如下所示：</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">&lt;meta <span class="attribute">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">&quot;google-site-verification&quot;</span> <span class="attribute">content</span>=<span class="string">&quot;rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg&quot;</span> /&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attribute">content</span>=<span class="string">&quot;width=device-width, initial-scale=1, maximum-scale=2&quot;</span>&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>添加完成之后，需要执行<code>hexo clean &amp;&amp; hexo g -d</code>部署</p>
+</li>
+<li>
+<p>部署完成之后打开博客网站，鼠标右键查看网页源代码，此时在源代码中应该可以搜到我们添加的代码的。</p>
+<blockquote>
+<p>如果没搜到，可以考虑稍作等待，多刷新几次页面，重新查看源代码；或检查上述步骤</p>
+</blockquote>
+</li>
+<li>
+<p>成功搜到之后，回到验证所有权的网页，点击验证。</p>
+</li>
+<li>
+<p>验证成功之后应该就会跳转到控制台的主页啦</p>
+</li>
+</ul>
+</li>
+<li>
+<p>添加站点地图</p>
+<p>添加完谷歌收录之后，紧接着就要上传网站的站点地图。</p>
+<ul>
+<li>
+<p>首先是需要安装插件，在终端执行cmd</p>
+<figure class="highlight ada"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-sitemap <span class="comment">--save</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>在<strong>站点配置文件</strong>中，添加如下配置。我是在文件末尾添加的。</p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="meta"># 站点地图</span></span><br><span class="line"><span class="symbol">sitemap:</span></span><br><span class="line"><span class="symbol">    path:</span> sitemap.xml</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>执行<code>hexo clean &amp;&amp; hexo g</code>重新生成后就可以在<code>public</code>目录下看到<code>sitemap.xml</code>文件了。</p>
+</li>
+<li>
+<p>回到<code>Google Search Console</code>，在左侧的菜单中选择站点地图，输入我们生成的站点地图<code>sitemap.xml</code>即可</p>
+<blockquote>
+<p>默认是已经有博客的地址了的，也就是已经显示了**<a href="https://treeknows.github.io/**%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AA%E9%9C%80%E8%A6%81%E5%9C%A8%E8%BE%93%E5%85%A5%E6%A1%86%E4%B8%AD%E8%BE%93%E5%85%A5%60sitemap.xml%60%E5%B9%B6%E7%82%B9%E5%87%BB%E6%8F%90%E4%BA%A4%E5%8D%B3%E5%8F%AF%E3%80%82">https://treeknows.github.io/**，我们只需要在输入框中输入`sitemap.xml`并点击提交即可。</a></p>
+<p>NOTE：刚添加完站点地图，下面的状态显示的可能不是<strong>成功</strong>，同样需要等待数天，才会更新状态。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>谷歌分析</p>
+<blockquote>
+<p>Google Analytics（GA）挺高级的，需要一定的学习成本。如果对站点SEO感兴趣，可以多多学习以下</p>
+</blockquote>
+<ul>
+<li>
+<p>首先要创建账号，前往<a href="https://analytics.google.com/">Google 分析</a>创建账号及媒体资源。</p>
+</li>
+<li>
+<p>没记错的话，用谷歌账号是可以直接登陆的</p>
+</li>
+<li>
+<p>登陆之后创建账号，账号名称没有特别的要求</p>
+</li>
+<li>
+<p>所有都创建完成之后会生成一个<code>衡量 ID</code>，格式如<code>G-8W35JPL36V</code></p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索<code>google_analytics</code>，并填写上述的ID</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Google Analytics</span></span><br><span class="line"><span class="attr">google_analytics:</span></span><br><span class="line">  <span class="string">//</span> <span class="string">!!!此处填写</span></span><br><span class="line">  <span class="attr">tracking_id:</span> <span class="string">G-8W35JPL36V</span></span><br><span class="line">  <span class="comment"># By default, NexT will load an external gtag.js script on your site.</span></span><br><span class="line">  <span class="comment"># If you only need the pageview feature, set the following option to true to get a better performance.</span></span><br><span class="line">  <span class="attr">only_pageview:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>重新生成部署之后应该就可以啦</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Bing收录</p>
+<p>Bing收录的过程类似于Google收录，甚至如果Google收录已经做完，Bing可以直接使用google账号登陆，直接导入Google Search Console的内容，非常方便</p>
+<ul>
+<li>点击<a href="https://www.bing.com/webmasters/home">Bing Webmaster Tools</a>开始提交站点</li>
+<li>忘记是要先登录还是直接可以添加站点了，总之找到添加站点的地方选择<strong>从 GSC 导入你的网站</strong>，之后可能需要验证以下google账号之类的，然后就一键导入了</li>
+<li>记得看下站点地图需不需要手动添加</li>
+</ul>
+<blockquote>
+<p>时间久了导致描述比较模糊，遇到问题可以留言。</p>
+</blockquote>
+</li>
+<li>
+<p>百度收录</p>
+<p>如果没有自己注册域名的话，百度是不可能收录Github Pages的，因为Github把百度的爬虫禁用了，所以如果希望百度可以搜索到自己的博客站点，需要购买域名并和Github Pages绑定一下，详细步骤自行Google。</p>
+<p>对于我来说，添加一个google就足够了，毕竟行业相关，科学上网是难不倒大家的。</p>
+</li>
+<li>
+<p>创建关于我、分类页面</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>menu</code>可以设置站点首页显示的菜单，如下</p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="symbol">menu:</span></span><br><span class="line"><span class="symbol">  home:</span> / || fa fa-home</span><br><span class="line">  <span class="meta">#tags: /tags/ || fa fa-tags</span></span><br><span class="line"><span class="symbol">  archives:</span> <span class="keyword">/archives/</span> || fa fa-archive</span><br><span class="line"><span class="symbol">  categories:</span> <span class="keyword">/categories/</span> || fa fa-th</span><br><span class="line"><span class="symbol">  about:</span> <span class="keyword">/about/</span> || fa fa-user</span><br><span class="line">  <span class="meta">#schedule: /schedule/ || fa fa-calendar</span></span><br><span class="line">  <span class="meta">#sitemap: /sitemap.xml || fa fa-sitemap</span></span><br><span class="line">  <span class="meta">#commonweal: /404/ || fa fa-heartbeat</span></span><br></pre></td></tr></table></figure>
+<p>我这边打开了<strong>分类</strong>和<strong>关于</strong>两个界面，此时本地验证的话，可以发现首页已经有相关的菜单栏，但是点进去会报<code>not found</code>，需要我们手动创建相关的页面。</p>
+</li>
+<li>
+<p>在hexo目录下，打开终端，执行以下命令</p>
+<figure class="highlight haxe"><table><tr><td class="code"><pre><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> categories</span><br><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> about</span><br></pre></td></tr></table></figure>
+<p>执行之后，会在<em>hexo/source/<em>目录下生成两个新的目录</em>about</em>和<em>categories</em>，两个目录下都会生成一个<code>index.md</code>文件，这个便是我们的页面了</p>
+</li>
+<li>
+<p><em>categories</em>目录下的<code>index.md</code>只需要修改类型即可，其内容会根据我们每篇博客中设定的分类自动生成</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment">#title: Blog Categories</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:36:03</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><em>about</em>目录下的<code>index.md</code>除了需要修改类型，还需要我们手动添加内容，就像写一篇博客一样。</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">About</span> <span class="string">Me</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:35:50</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="string">CONTENT</span></span><br><span class="line"><span class="string">······</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>添加评论系统 <code>Gitalk</code></p>
+<ul>
+<li>
+<p>登录 <strong>Github</strong> ，右键头像，在下拉菜单中，选择“<strong>Settings</strong>”选项</p>
+</li>
+<li>
+<p>在左侧菜单选择“<strong>Developer settings</strong>”选项，进入开发者页面</p>
+</li>
+<li>
+<p>选择 <strong>OAuth Apps</strong> ，并点击“<strong>New OAuth App</strong>”创建新授权应用</p>
+</li>
+<li>
+<p>设置该应用相关信息，其中</p>
+<ul>
+<li>Application name为应用名称，如<code>博客评论</code></li>
+<li>Homepage URL为博客主页，需要和自己的博客一致</li>
+<li>Authorization callback URL 授权回调页面（同 Homepage URL）</li>
+</ul>
+</li>
+<li>
+<p>点击创建应用，进入新的页面</p>
+</li>
+<li>
+<p>在新页面的<strong>Clients secrets</strong>处，点击<code>Generate a new client secret</code>，可能需要验证密码才能生成。</p>
+</li>
+<li>
+<p>保存生成的client secret和 client id，后续要用到</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>gitalk</code>，配置如下：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Gitalk</span></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="regexp">//</span> 启用</span><br><span class="line">  enable: true</span><br><span class="line">  <span class="regexp">//</span> github用户名</span><br><span class="line">  github_id: treeknows</span><br><span class="line">  <span class="regexp">//</span> 在哪个仓库下，推荐博客所在的仓库</span><br><span class="line">  repo: treeknows.github.io</span><br><span class="line">  <span class="regexp">//</span> 刚刚保存的ID</span><br><span class="line">  client_id: <span class="number">22</span>fb59ff85c3aef2677a</span><br><span class="line">  <span class="regexp">//</span> 刚刚生成的secret</span><br><span class="line">  client_secret: <span class="number">246142</span>feb132313b08ee3ff55678c88244b67b97</span><br><span class="line">  <span class="regexp">//</span> Github用户名</span><br><span class="line">  admin_user: treeknows</span><br><span class="line">  <span class="comment">## 点击评论框时会不会变黑，说实话true了不太好看</span></span><br><span class="line">  distraction_free_mode: false <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk&#x27;s display language depends on user&#x27;s browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language:</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>参考注释进行配置。选择<code>repo</code>时要注意，<code>repo</code>应该是public的，否则评论是无法使用的。这也就是为什么在第一篇博客中，推荐将博客所在的仓库设为public而不是private，就是为了此时的方便。</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索<code>comments</code>，激活gitalk</p>
+<figure class="highlight nestedtext"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line"><span class="attribute">comments</span><span class="punctuation">:</span></span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  <span class="attribute">style</span><span class="punctuation">:</span> <span class="string">tabs</span></span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  <span class="attribute">// !!! 选择gitalk</span></span><br><span class="line"><span class="attribute">  active</span><span class="punctuation">:</span> <span class="string">gitalk</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>执行<code>hexo clean &amp;&amp; hexo g -d</code>重新生成并部署，打开博客选择一篇文章查看效果。</p>
+</li>
+<li>
+<p>注意，第一次使用评论系统是需要进行一个初始化的，似乎只需要验证一下github账号即可，比较简单。在之后的post了新文章后，自测是不需要再次手动初始化的。（但是网上说依旧需要手动初始化😶</p>
+</li>
+</ul>
+</li>
+<li>
+<p>增加版权信息</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>creative_commons</code></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">creative_commons:</span></span><br><span class="line">  <span class="attr">license:</span> <span class="string">by-nc-sa</span></span><br><span class="line">  <span class="comment">## 在侧边栏显示一个协议的图标</span></span><br><span class="line">  <span class="attr">sidebar:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment">## 文章底部显示版权信息</span></span><br><span class="line">  <span class="attr">post:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">language:</span></span><br></pre></td></tr></table></figure>
+<p>将<code>post</code>设置为true，重新生成即可。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>图床选择</p>
+<ul>
+<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的博客，迫使自己尽快掌握图床的使用🤡</li>
+</ul>
+</li>
+<li>
+<p>添加深色模式 - updated on 2023.10.17</p>
+<ul>
+<li>
+<p>NexT 8.x原生已经支持暗黑模式，需要在<strong>主题配置文件</strong>中搜索<code>darkmode</code>，设置为true即可。但是这种配置方式没有切换按钮，默认根据系统偏好决定是否启动暗黑模式。</p>
+</li>
+<li>
+<p>NexT 7.x / 8.x 自动添加可切换的深色模式</p>
+<ul>
+<li>安装<code>hexo-next-darkmode</code>插件</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="code"><pre><span class="line">npm install hexo-<span class="built_in">next</span>-darkmode <span class="comment">--save</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>配置Hexo插件，在<strong>主题配置文件</strong>中，添加如下内容：</li>
+</ul>
+<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line"># Darkmode JS</span><br><span class="line"># For more information: https:<span class="comment">//github.com/rqh656418510/hexo-next-darkmode, https://github.com/sandoche/Darkmode.js</span></span><br><span class="line">darkmode_js:</span><br><span class="line">  enable: true</span><br><span class="line">  ## 距离底部的距离</span><br><span class="line">  bottom: <span class="string">&#x27;32px&#x27;</span> # default: <span class="string">&#x27;32px&#x27;</span></span><br><span class="line">  ## 距离右边的距离</span><br><span class="line">  right: <span class="string">&#x27;32px&#x27;</span> # default: <span class="string">&#x27;32px&#x27;</span></span><br><span class="line">  left: <span class="string">&#x27;unset&#x27;</span> # default: <span class="string">&#x27;unset&#x27;</span></span><br><span class="line">  time: <span class="string">&#x27;0.5s&#x27;</span> # default: <span class="string">&#x27;0.3s&#x27;</span></span><br><span class="line">  mixColor: <span class="string">&#x27;transparent&#x27;</span> # default: <span class="string">&#x27;#fff&#x27;</span></span><br><span class="line">  backgroundColor: <span class="string">&#x27;transparent&#x27;</span> # default: <span class="string">&#x27;#fff&#x27;</span></span><br><span class="line">  buttonColorDark: <span class="string">&#x27;#100f2c&#x27;</span> # default: <span class="string">&#x27;#100f2c&#x27;</span></span><br><span class="line">  buttonColorLight: <span class="string">&#x27;#fff&#x27;</span> # default: <span class="string">&#x27;#fff&#x27;</span></span><br><span class="line">  ## 默认激活</span><br><span class="line">  isActivated: false # default false</span><br><span class="line">  ## 保存状态到cookies</span><br><span class="line">  saveInCookies: true # default: true</span><br><span class="line">  label: <span class="string">&#x27;🌓&#x27;</span> # default: <span class="string">&#x27;&#x27;</span></span><br><span class="line">  ## 自动匹配系统主题</span><br><span class="line">  autoMatchOsTheme: true # default: true</span><br><span class="line">  libUrl: # Set custom library cdn url for Darkmode.js</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><code>isActivated: true</code>：默认激活暗黑/夜间模式，请始终与 <code>saveInCookies: false</code>、<code>autoMatchOsTheme: false</code> 一起使用</p>
+</blockquote>
+<ul>
+<li>确保NexT原生的<code>darkmode</code>选项设置为<code>false</code></li>
+</ul>
+<p>效果展示：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG" alt="暗黑模式效果展示"></p>
+<blockquote>
+<p>深色模式参考博客：<a href="https://blog.csdn.net/rqh656418510/article/details/123676457">https://blog.csdn.net/rqh656418510/article/details/123676457</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>Blog支持emoji表情 - updated on 2024.01.04</p>
+<p>想要在文章中使用emoji表情已知的方法有两种：</p>
+<ul>
+<li>
+<p>复制emoji表情直接粘贴在Typora中，以这种方式贴的emoji可以直接在Blog网站里渲染出来，缺点是寻找表情比较麻烦。</p>
+<p><a href="https://www.emojiall.com/zh-hans">一个emoji表情网站</a></p>
+</li>
+<li>
+<p>此外，Typora支持直接输入emoji表情，其格式为<code>:emoji_code:</code>，例如<code>:smile:</code>对应:smile:。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。</p>
+<p><strong>参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。</strong></p>
+</li>
 </ul>
 </li>
 </ul>
-<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
-<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
-<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
-<p>参考设置如图：</p>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
-<h2 id="Typora">Typora</h2>
-<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
-<p>配置过程为：</p>
-<ul>
-<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
-<li>如下图所示，依次设置：
-<ul>
-<li>图片存储方式：上传图片</li>
-<li>PicGo路径：选择为PicGo的安装路径</li>
-<li>点击<strong>验证图片上传选项</strong></li>
-</ul>
-</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
-<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
-<p>此时就可以直接复制图片到Typora了。</p>
-<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
-<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
-<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
-<blockquote>
-<p><s><strong>使用Typora</strong></s><br>
-<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
-<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
-</blockquote>
-<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
-<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
-<blockquote>
-<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
-</blockquote>
-<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
-<ul>
-<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
-</ul>
-<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
-<p><strong>解决</strong>：修改hosts文件</p>
-<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
-<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></table></figure>
-<p>重启Typora即可。</p>
-<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
-<p><img src="https://gitee.com/darlinn/blog_pic/raw/master/imgs/912922.png" alt="haha"></p>
-<h2 id="参考">参考</h2>
-<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
-<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+<h2 id="总结">总结</h2>
+<p>到这里，配置相关的介绍基本就结束了，可能会有一些没有涉及到的小修改，可以参考我博客源码中的配置文件：<a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/_config.yml">站点配置文件</a> &amp; <a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/themes/next/_config.yml">主题配置文件</a>，里面会有一部分的中文注释，帮助理解。</p>
+<p>另外，如果觉得我的博客风格还不错，又不想浪费过多的时间配置，似乎可以直接clone我的<a href="https://github.com/treeknows/treeknows.github.io.git">博客源码</a>，修改一些关键信息为自己的信息，实现极速建站。</p>
+<p>大致需要的步骤可能为：</p>
+<ol>
+<li>Fork我的仓库</li>
+<li>修改仓库名字为自己的<code>username.github.io</code></li>
+<li>clone到本地</li>
+<li>修改<strong>站点配置文件</strong>中部署相关的的配置，搜索<code>deploy</code></li>
+<li>修改基本信息，如网站title、头像之类的</li>
+<li>删除我为数不多的博客</li>
+<li>GA &amp; Gitalk等换成自己的id</li>
+<li>提交自己新的站点到Google Search Console</li>
+<li>尝试部署</li>
+</ol>
+<p>只脑补到这些，未经验证，不包成功哈🙄</p>
 ]]></content>
       <categories>
         <category>博客搭建</category>
       </categories>
       <tags>
         <tag>经验</tag>
-        <tag>PicGo</tag>
-        <tag>图床搭建</tag>
+        <tag>Github Pages</tag>
+        <tag>Hexo</tag>
+        <tag>NexT主题</tag>
       </tags>
   </entry>
 </search>
