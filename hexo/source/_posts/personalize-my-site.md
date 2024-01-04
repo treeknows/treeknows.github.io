@@ -500,7 +500,7 @@ comments: true
 
   - 把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于**图床的使用**的博客，迫使自己尽快掌握图床的使用🤡
   
-- 添加深色模式 - update on 2023.10.17
+- 添加深色模式 - updated on 2023.10.17
 
   - NexT 8.x原生已经支持暗黑模式，需要在**主题配置文件**中搜索`darkmode`，设置为true即可。但是这种配置方式没有切换按钮，默认根据系统偏好决定是否启动暗黑模式。
 
@@ -548,6 +548,18 @@ comments: true
     ![暗黑模式效果展示](https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG)
 
     > 深色模式参考博客：https://blog.csdn.net/rqh656418510/article/details/123676457
+  
+- Blog支持emoji表情 - updated on 2024.01.04
+
+  想要在文章中使用emoji表情已知的方法有两种：
+
+  - 复制emoji表情直接粘贴在Typora中，以这种方式贴的emoji可以直接在Blog网站里渲染出来，缺点是寻找表情比较麻烦。
+
+    [一个emoji表情网站](https://www.emojiall.com/zh-hans)
+
+  - 此外，Typora支持直接输入emoji表情，其格式为`:emoji_code:`，例如`:smile:`对应:smile:。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。
+
+    **参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。**
 
 
 ## 总结

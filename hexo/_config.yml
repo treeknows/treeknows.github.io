@@ -126,3 +126,5 @@ search:
 # 站点地图
 sitemap:
     path: sitemap.xml
+
+# emoji表情支持
