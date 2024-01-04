@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="google-site-verification" content="rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg" />
+<meta name="msvalidate.01" content="41CDEF49B6C0AE7EBCA90FD97E410ADE" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"treeknows.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":-1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="某日心血来潮，想着要给无所事事的自己找一些事做，耗费了数个安静的夜晚，我的个人博客诞生了 ：) 在这个过程中，遇到了一些问题，也有过许多思量。因此在博客基本建完之后，回过头来，总结一番，记录下这几天的收获，也可供有幸来此的友友参考。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Github Pages + Hexo NexT搭建个人博客">
+<meta property="og:url" content="https://treeknows.github.io/birth-of-my-blog/index.html">
+<meta property="og:site_name" content="Hi tree">
+<meta property="og:description" content="某日心血来潮，想着要给无所事事的自己找一些事做，耗费了数个安静的夜晚，我的个人博客诞生了 ：) 在这个过程中，遇到了一些问题，也有过许多思量。因此在博客基本建完之后，回过头来，总结一番，记录下这几天的收获，也可供有幸来此的友友参考。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-04-17T14:39:07.000Z">
+<meta property="article:modified_time" content="2023-12-20T04:02:21.096Z">
+<meta property="article:author" content="treeknows">
+<meta property="article:tag" content="经验">
+<meta property="article:tag" content="Github Pages">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="NexT主题">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://treeknows.github.io/birth-of-my-blog/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Github Pages + Hexo NexT搭建个人博客 | Hi tree</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8W35JPL36V"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8W35JPL36V');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hi tree</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做一棵树</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://treeknows.github.io/birth-of-my-blog/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="treeknows">
+      <meta itemprop="description" content="Let me grow">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hi tree">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Github Pages + Hexo NexT搭建个人博客
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-17 22:39:07" itemprop="dateCreated datePublished" datetime="2023-04-17T22:39:07+08:00">2023-04-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-12-20 12:02:21" itemprop="dateModified" datetime="2023-12-20T12:02:21+08:00">2023-12-20</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>某日心血来潮，想着要给无所事事的自己找一些事做，耗费了数个安静的夜晚，我的个人博客诞生了 ：)</p>
+<p>在这个过程中，遇到了一些问题，也有过许多思量。因此在博客基本建完之后，回过头来，总结一番，记录下这几天的收获，也可供有幸来此的友友参考。</p>
+<span id="more"></span>
+<h2 id="心理博弈篇">心理博弈篇</h2>
+<p>对于个人博客形式的考虑，我还是比较明确的，坚定地选择了<strong>Github Pages</strong>，排除了CSDN、简书等站点。</p>
+<p>选择Github Pages原因在于：</p>
+<ul>
+<li>想要折腾一番，若是坚持不下来，那坚持写博客就更是空谈了</li>
+<li>免费，新手上路，甚是友好</li>
+<li>有蛮多开源且好看的主题的说</li>
+</ul>
+<p>好吧，好看的主题确实很多，但也让我纠结了很久。最开始选择的静态博客框架是Jekyll，这个也是Github官方支持的框架，符合心意的主题如<a target="_blank" rel="noopener" href="https://github.com/Huxpro/huxpro.github.io">HuxPro</a>、<a target="_blank" rel="noopener" href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt</a>等。后来又发现了Hexo框架和**<a target="_blank" rel="noopener" href="https://github.com/theme-next/hexo-theme-next">NexT</a>主题**，我觉得很可，黑白配色，简约到我心里。</p>
+<p>对于Markdown编辑器，也有过一番纠结。鉴于平时只用过有道云笔记&amp;飞书文档写东西，我又在网上大查一通，力求选一个简单使用方便快捷易上手的编辑器。过程不表，最终摆在面前的有两种方案：</p>
+<ul>
+<li>VSCode + Markdown插件</li>
+<li>Typora</li>
+</ul>
+<p>听说Typora现在是个付费软件，本想投入VSCode的怀抱。又听说Beta版本还是可以免费使用的，于是又打算尝试一下。当然，可能小部分原因是因为之前听朋友夸过叭。</p>
+<p>最终，一番思量下来，博客架构也算是基本确定了：<strong>Github Pages + Hexo NexT + Typora</strong></p>
+<h2 id="一知半解篇">一知半解篇</h2>
+<h3 id="Github-Pages">Github Pages</h3>
+<h4 id="前置条件">前置条件</h4>
+<p>创建Github Pages，只需要两个条件：</p>
+<ul>
+<li>Github账号</li>
+<li>本地安装Git</li>
+</ul>
+<h5 id="Github相关">Github相关</h5>
+<p>已有账号的友友可以默默思考一下自己的用户名，是否中意；没有账号的友友自行注册时记得想一个酷酷的name，因为个人Github Pages默认的域名便是<code>username.github.io</code>，且不支持自定义。So，如果如我一般，不满足现有的用户名，可以自行修改。修改过程文字描述如下：</p>
+<ol>
+<li>Github单击头像</li>
+<li>点击<strong>Settings</strong></li>
+<li>左侧列表单击<strong>Account</strong></li>
+<li>选择<strong>Change username</strong></li>
+<li>之后大概是一些注意事项，详细阅读了解，修改即可</li>
+</ol>
+<p>此外，还推荐友友们检查一下Repository default branch，如果默认是main，那么建议修改为master。此操作涉及到后续主题配置及部署。检查默认分支步骤文字描述如下：</p>
+<ol>
+<li>进入Settings界面</li>
+<li>左侧列表点击Repositories</li>
+<li>映入眼帘的便是了</li>
+</ol>
+<h5 id="Git相关">Git相关</h5>
+<p>后续主题配置和博客编写都会在本地进行，因此需要使用Git进行代码管理。</p>
+<p>此处简述一下我在clone repo时的曲折，以供参考。</p>
+<p>Github比较常用的clone方式有两种：</p>
+<ul>
+<li>https</li>
+<li>ssh</li>
+</ul>
+<p><strong>https</strong>方式在clone时需要验证密码，<strong>ssh</strong>需要提前上传公钥。于是图省事选择了<strong>https</strong>。结果···</p>
+<p>在clone代码时，有时会直接报错，如下</p>
+<blockquote>
+<p>fatal: unable to access ‘<a target="_blank" rel="noopener" href="https://github.com/treeknows/treeknows.github.io.git/">https://github.com/treeknows/treeknows.github.io.git/</a>’: OpenSSL SSL_read: Connection was reset, errno 10054</p>
+</blockquote>
+<p>有时会弹出来<strong>github</strong>的认证窗口，验证之后又弹出了<strong>Openssh</strong>相关的窗口，但总是验证失败。</p>
+<p>基于上述的报错，google了蛮多资料，涉及到Git配置修改、github access token等许多内容，但没能真正解决问题。</p>
+<p>由此改用更为熟悉的<strong>ssh</strong>方式，需要在本地先生成公钥，复制并上传。对此处内容陌生的友友可以自行google学习，只需要理解现在在做的是什么，带着目的去查找教程，就不会盲目且迷糊了。</p>
+<blockquote>
+<p>即：需要使用ssh的方式从github clone代码，所以需要提前上传本地的公钥，那么就需要本地有一个公钥。那么如何检查本地是否有公钥呢？如何在本地生成/重新生成公钥呢？有了公钥具体要怎么上传到github呢？</p>
+<p>清楚目的，带着问题，google即可。</p>
+<p>此方法亦适用于本篇其他没有详述过程的步骤，乃至日常工作、学习。</p>
+</blockquote>
+<h4 id="Pages创建">Pages创建</h4>
+<p>Github Pages的创建过程是比较简单的，过程文字描述如下：</p>
+<ol>
+<li>进入个人主页界面</li>
+<li>点击头像左边的➕</li>
+<li>点击new repository</li>
+<li>进入创建界面<strong>Create a new repository</strong>
+<ol>
+<li>Repository name必须填写<code>username.github.io</code>，如<code>zhangsan.github.io</code></li>
+<li>Description描述，可写可不写</li>
+<li>公开与否建议设为<strong>Public</strong>，涉及到后续评论系统</li>
+<li>README file &amp; .gitignore file &amp; license，自由选择</li>
+</ol>
+</li>
+<li>配置OK后点击<strong>Create repository</strong>按钮</li>
+<li>此时应该就到仓库的主页了</li>
+<li>点击<strong>仓库主页的Settings</strong>，区别于之前的Settings</li>
+<li>点击左边列表中的<strong>Pages</strong></li>
+<li>界面中Source选择<strong>Depoly from a branch</strong></li>
+<li>Branch分别选择<strong>master</strong> &amp; <strong>/(root)</strong>，没有修改默认分支为master的应该选择main</li>
+<li>此时博客网站应该已经可以访问了，在浏览器地址栏输入<code>username.github.io</code></li>
+</ol>
+<p>此时的网站还属于比较简陋的状态，下一步，<strong>搞个主题</strong>。</p>
+<blockquote>
+<p>如果如果此时网站打不开，可能是需要等待一下。在仓库主页的右下，有一个<strong>Environment</strong>，可以查看当前github-pages state</p>
+<p>如果如果还是不行，可能是需要一个README文件，或一个简单的index.html。请勇敢解决它。</p>
+</blockquote>
+<h3 id="Hexo-NexT">Hexo NexT</h3>
+<p>本站使用的是基于Hexo框架的NexT主题，黑白色调，主打一个简约。主题包含四种布局（暂且称为布局），简单理解就是上下结构和左右结构，可以根据个人喜好选择。</p>
+<h4 id="前置条件-2">前置条件</h4>
+<p><strong>Hexo</strong>是基于<strong>NodeJS</strong>编写的，所以需要安装<strong>NodeJS</strong>和<strong>npm</strong>工具。</p>
+<h5 id="NodeJS安装">NodeJS安装</h5>
+<p>首先需要在官网下载安装包，<a target="_blank" rel="noopener" href="http://nodejs.cn/download/">NodeJS官网</a>，安装包下载完成之后运行。除了安装路径建议手动修改一下，其他保持默认一路Next即可。</p>
+<blockquote>
+<p>macOS or Linux安装方式请自行google</p>
+</blockquote>
+<p>安装完成之后，打开<strong>git bash</strong>，输入以下命令检查安装是否成功</p>
+<figure class="highlight crmsh"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">node</span> <span class="title">-v</span></span><br><span class="line">v18.<span class="number">15.0</span></span><br><span class="line"></span><br><span class="line">$ npm -v</span><br><span class="line"><span class="number">9.5</span>.<span class="number">0</span></span><br></pre></td></tr></tbody></table></figure>
+<p>一般情况下是不会有问题的，我安装的很顺利，所以没有相关的报错可以提供解决思路。</p>
+<h5 id="Hexo安装">Hexo安装</h5>
+<p>安装Hexo只需执行下述命令，亦可以在<a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/">Hexo官网</a>查看安装及使用方法。</p>
+<figure class="highlight crystal"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>npm install -g hexo-cli</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看hexo版本</span></span><br><span class="line"><span class="variable">$ </span>hexo -v</span><br></pre></td></tr></tbody></table></figure>
+<p>我当时在安装hexo结束之后，查看版本会报错，找不到hexo命令。</p>
+<p>似乎看起来是安装没有成功，但是<strong>npm install</strong>却也没有打印出任何error信息，最终的解决办法为：</p>
+<figure class="highlight avrasm"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ npx hexo -v</span><br><span class="line">hexo-<span class="keyword">cli</span>: <span class="number">4.3</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">os:</span> win32 <span class="number">10.0</span><span class="number">.19044</span></span><br><span class="line"><span class="symbol">node:</span> <span class="number">18.15</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">v8:</span> <span class="number">10.2</span><span class="number">.154</span><span class="number">.26</span>-node<span class="number">.25</span></span><br><span class="line">···</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>是的，执行<code>npx hexo</code>而不是<code>hexo</code></p>
+<blockquote>
+<p>2023.09.28更新：</p>
+<p>Windows下想要直接执行<code>hexo</code>需要手动添加环境变量。</p>
+<p>相对路径为：BLOG_DIR\hexo\node_modules.bin</p>
+</blockquote>
+<h4 id="主题安装">主题安装</h4>
+<p>万事俱备，只欠安装。</p>
+<p>但是在安装之前，要唠叨两句。考虑到博客的框架、主题、配置是在本地环境下的，如果涉及到更换电脑，便需要推倒重来，于是便新建了<strong>hexo</strong>分支来管理博客的主题和配置文件，博客站点的真正内容会部署到<strong>master</strong>分支。这样如果换了电脑，便只需要安装<strong>NodeJS</strong>和<strong>Hexo</strong>，就能直接得到原本的博客环境啦。</p>
+<h5 id="Hexo初始化">Hexo初始化</h5>
+<p>首先是要先把新建的仓库clone到本地，新建博客源码分支<strong>hexo</strong>，初始化hexo，具体命令如下：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">$ git clone xxxxxx <span class="regexp">//</span> xxxxx是github上复制的clone地址</span><br><span class="line"></span><br><span class="line">$ cd xxxxxx <span class="regexp">//</span> clone到本地会生成一个跟仓库同名的目录</span><br><span class="line"></span><br><span class="line">$ git checkout -b hexo <span class="regexp">//</span> 创建并切换到hexo分支</span><br><span class="line"></span><br><span class="line">$ hexo init hexo <span class="regexp">//</span> 初始化hexo，第一个hexo是cmd，第二个hexo是新建hexo目录</span><br><span class="line"></span><br><span class="line">$ cd hexo <span class="regexp">//</span> 进入新建的hexo目录</span><br><span class="line"></span><br><span class="line">$ npm install <span class="regexp">//</span> 安装相关依赖</span><br><span class="line"></span><br><span class="line">$ hexo g <span class="regexp">//</span> generate，生成静态网站</span><br><span class="line"></span><br><span class="line">$ hexo s <span class="regexp">//</span> server，本地预览</span><br></pre></td></tr></tbody></table></figure>
+<p>到这里就可以打开浏览器输入<strong>localhost:4000</strong>，进行本地预览了。</p>
+<blockquote>
+<p>上述步骤中，如有需要<strong>hexo</strong>请灵活替换为<strong>npx hexo</strong>，以及过程来自于回忆，如果哪一步的输出有报错，请google解决一下，也欢迎<strong>留言咨询</strong>。</p>
+</blockquote>
+<p>此时本地预览的界面是Hexo默认的主题，接下来介绍安装NexT主题。</p>
+<h5 id="NexT主题安装">NexT主题安装</h5>
+<figure class="highlight awk"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ cd hexo <span class="regexp">//</span>确保当前目录处于hexo目录下</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> clone NexT主题，如果使用https clone报错，可以自行替换为ssh的链接</span><br><span class="line">$ git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/theme-next/</span>hexo-theme-<span class="keyword">next</span> themes/<span class="keyword">next</span> </span><br></pre></td></tr></tbody></table></figure>
+<p>此时NexT主题就已经安装到本地了，其配置保存在<strong>themes/next</strong>目录下。若想要启用NexT主题，还需要修改Hexo的配置文件<code>_config.yml</code>，注意此文件应位于<strong>hexo</strong>目录下，称为<strong>站点配置文件</strong>。在<strong>themes/next</strong>路径下也有一个<code>_config.yml</code>，称之为<strong>主题配置文件</strong>。</p>
+<p>在<strong>站点配置文件</strong>中搜索<strong>theme</strong>，修改为如下值：</p>
+<figure class="highlight clean"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https:<span class="comment">//hexo.io/plugins/</span></span><br><span class="line">## Themes: https:<span class="comment">//hexo.io/themes/</span></span><br><span class="line"># 启用主题</span><br><span class="line">theme: next</span><br></pre></td></tr></tbody></table></figure>
+<p>执行如下命令本地验证主题是否生效：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ hexo clean <span class="regexp">//</span> 清理之前生成的资源</span><br><span class="line">$ hexo g <span class="regexp">//</span> 重新生成</span><br><span class="line">$ hexo s <span class="regexp">//</span> 启动本地服务</span><br></pre></td></tr></tbody></table></figure>
+<p>打开浏览器输入<strong>localhost:4000</strong>，进行本地预览。</p>
+<h5 id="部署到Github-Pages">部署到Github Pages</h5>
+<p>本地预览无误，便可部署到Github Pages了。</p>
+<p>首先需要安装插件<strong>hexo-deployer-git</strong></p>
+<figure class="highlight ada"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install hexo-deployer-git <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
+<p>修改<strong>站点配置文件</strong>，搜索<strong>deploy</strong></p>
+<figure class="highlight dts"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># Deployment</span></span><br><span class="line"><span class="meta">## Docs: https:<span class="comment">//hexo.io/docs/one-command-deployment</span></span></span><br><span class="line"><span class="symbol">deploy:</span></span><br><span class="line"><span class="symbol">  type:</span> git</span><br><span class="line"><span class="symbol">  repo:</span></span><br><span class="line">      <span class="meta"># 需要替换为自己仓库的链接，根据https或ssh方式不同自由选择，我已经上传了公钥，所以选择ssh</span></span><br><span class="line"><span class="symbol">    github:</span> git@github.com:treeknows/treeknows.github.io.git</span><br><span class="line">  <span class="meta"># 此处似乎只能选择master，配置为main时，实际还是会部署到master分支</span></span><br><span class="line"><span class="symbol">  branch:</span> master</span><br></pre></td></tr></tbody></table></figure>
+<p>可以将配置修改为如上，记得<strong>替换自己的仓库链接</strong>。此外配置branch时，设置为<strong>main</strong>实测是无效的，依旧会push到master分支，如果没有master分支，则会自己创建。这也是为什么在前面推荐<strong>修改默认创建分支为master</strong>，来自强迫症患者的倔强。</p>
+<p>修改配置后，需要手动部署到Github</p>
+<figure class="highlight crystal"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>hexo g -d</span><br></pre></td></tr></tbody></table></figure>
+<p>部署成功后，稍待片刻，便可访问自己的博客查看效果了。</p>
+<h5 id="备份Hexo">备份Hexo</h5>
+<p>此时博客已然部署完毕，但是相关的配置还只存在于本地，需要push到Github。</p>
+<figure class="highlight gams"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> git branch <span class="comment">// 请确保在hexo分支</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git add . <span class="comment">// 添加文件</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git commit <span class="comment">// 提交</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git push --<span class="keyword">set</span>-upstream <span class="comment">origin hexo</span> // 推送到远端</span><br></pre></td></tr></tbody></table></figure>
+<p>推送到Github之后，还需要在Github上将<strong>hexo</strong>设为默认分支，设置过程文字描述如下：</p>
+<ol>
+<li>打开博客仓库主页</li>
+<li>点击仓库主页的Settings</li>
+<li>在<strong>General</strong>页面，设置Default branch为<strong>hexo</strong></li>
+</ol>
+<p>此时博客配置就已经备份成功了，如果切换了电脑，只需要：</p>
+<ol>
+<li>
+<p>clone 仓库 (默认分支为hexo)</p>
+<figure class="highlight crmsh"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="keyword">clone</span> <span class="title">git</span>@github.com:*.github.io.git</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>在本地 *.github.io 文件夹下通过 Git bash 依次执行下列指令：</p>
+<figure class="highlight cmake"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ npm <span class="keyword">install</span> hexo</span><br><span class="line">$ npm <span class="keyword">install</span> </span><br><span class="line">$ npm <span class="keyword">install</span> hexo-deployer-git</span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ol>
+<blockquote>
+<p>切记，不需要 hexo init 这条指令</p>
+</blockquote>
+<p>此时便可以在新电脑上愉快的writing了。</p>
+<blockquote>
+<p>实测过程中遇到一个问题：在B电脑上clone下来博客的配置后，修改了一些配置，执行<code>npm install</code>安装了一个插件，并将这些修改的部分提交到了Github。在A电脑同步最新配置后，本地<code>hexo g</code>会报错，怀疑可能的原因有：</p>
+<ul>
+<li>我添加了ignore文件，可能导致B电脑安装的插件被忽略，没有push到服务器，导致A电脑配置了插件，却没有真正下载插件</li>
+<li>也可能是需要先执行<code>hexo clean</code>，再重新生成</li>
+</ul>
+<p>最终的解决是上述两点都做了，在A电脑手动安装了插件，clean之后再生成预览。</p>
+</blockquote>
+<h3 id="Typora">Typora</h3>
+<p>Markdown编辑器使用的是Typora 0.11.18 beta版本，下载地址<a target="_blank" rel="noopener" href="https://ghpym.lanzoui.com/b00zng7gd">点击此处</a>，下载之后安装，运行。此时运行会有弹框提示升级，不升级便只能退出应用，无法使用。</p>
+<p>此时需要退出应用，按照以下步骤修改注册表即可正常使用。</p>
+<ol>
+<li>按<code>Win+R</code>打开运行窗口，输入<code>regedit</code>，点确定，打开注册表，依次展开<code>计算机\HKEY_CURRENT_USER\Software\Typora</code>，然后在<code>Typora</code>上右键，点<code>权限</code>，选中<code>Administrtors</code>，把权限全部设置为<code>拒绝</code>。</li>
+<li>打开Typora，此时应该可以正常打开应用了。还需要在偏好设置里把自动更新关掉。</li>
+</ol>
+<p>做完上面两步，Typora beta版本应该就能正常使用了。看网上的说法，最新版本也有破解的办法，只是我个人觉得没必要。</p>
+<p>另外提一下正版的Typora购买也就不到100米，可以在三台设备上使用，可以一直使用，不排除大版本升级后需要重新购买的可能。所以比较推荐的做法是，先感受一下Typora，如果使用感受不错以及新版本有心动的功能的话，可以考虑支持一下正版。</p>
+<p>初体验，确实不错，插入图片相关的功能还在探索ing，再写几篇博客就能背下来Markdown的语法了。</p>
+<h3 id="个性化主题">个性化主题</h3>
+<p>到此，博客的现状应该是NexT主题，但是还没有修改任何配置，因此接下来就要对配置进行一些修改，大致会分为：</p>
+<ul>
+<li>基础配置</li>
+<li>个性配置</li>
+</ul>
+<p>基础配置诸如网站标题、描述一类的配置，篇幅不会太长；个性配置便有很多说头了，我会另写一篇博客专门介绍，不会太久。</p>
+<p>基础配置位于站点配置文件的开头，大致有以下几种：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Site</span></span><br><span class="line">title: <span class="regexp">//</span> 网站标题</span><br><span class="line">subtitle: <span class="regexp">//</span> 子标题，在主页显示，看起来的效果更像一个签名</span><br><span class="line">description: <span class="regexp">//</span> 在侧边栏显示，效果也像是签名</span><br><span class="line">keywords: <span class="regexp">//</span> 网站关键字</span><br><span class="line">author: <span class="regexp">//</span> 作者，会显示在侧边栏以及网站底部</span><br><span class="line">language: zh-CN <span class="regexp">//</span> 语言</span><br><span class="line">timezone: <span class="string">'Asia/Shanghai'</span> <span class="regexp">//</span> 时区</span><br><span class="line"></span><br><span class="line">url: <span class="regexp">//</span> 填写博客站点的地址即可</span><br></pre></td></tr></tbody></table></figure>
+<p>基础配置大致如此，更多的配置含义及细节，随后更新。</p>
+<h2 id="豁然开朗篇">豁然开朗篇</h2>
+<p>这篇博客陆陆续续用了三个工作日的安静夜晚才完成，导致写到此处时竟忘记了豁然开朗在哪里，忘记了原本想表述在此的内容，可见</p>
+<ul>
+<li>写博客并非一件容易之事，还是需要花费一定的时间和精力</li>
+<li>写出完整内容之前可以先列个大纲或者写个备忘，把想说的先简单记录</li>
+</ul>
+<p>也如上所说，本文是在本站配置好之后才开始写，且并非连续写完，难免存在疏漏，以及逻辑、语句不通之处，欢迎指正。</p>
+<p>也因为图床目前还在研究，所以有意的选择了无图模式，表述不够清晰之处，欢迎留言交流。</p>
+<p>最后，希望这一段时间的努力不会浪费，我能够坚持把博客写下去，给自己一个沉淀、成长的机会。</p>
+<p>：）</p>
+
+    </div>
+	 <!-- 文章结束表示语-->
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">---------------------------------The End <i class="fa fa-tree" color="#66FFCC"></i>---------------------------------</div>
+    
+</div>
+      
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\personalize-my-site\" rel="bookmark">基于Github Pages + NexT主题的个性化配置</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\Disable-Screen-Lock-In-Android\" rel="bookmark">Android禁用自动休眠和锁屏</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\how-to-insert-image-into-blog\" rel="bookmark">Github + PicGo + Typora搭建图床</a></div>
+    </li>
+  </ul>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>treeknows
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://treeknows.github.io/birth-of-my-blog/" title="Github Pages + Hexo NexT搭建个人博客">https://treeknows.github.io/birth-of-my-blog/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BB%8F%E9%AA%8C/" rel="tag"><i class="fa fa-tag"></i> 经验</a>
+              <a href="/tags/Github-Pages/" rel="tag"><i class="fa fa-tag"></i> Github Pages</a>
+              <a href="/tags/Hexo/" rel="tag"><i class="fa fa-tag"></i> Hexo</a>
+              <a href="/tags/NexT%E4%B8%BB%E9%A2%98/" rel="tag"><i class="fa fa-tag"></i> NexT主题</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/personalize-my-site/" rel="next" title="基于Github Pages + NexT主题的个性化配置">
+      基于Github Pages + NexT主题的个性化配置 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%83%E7%90%86%E5%8D%9A%E5%BC%88%E7%AF%87"><span class="nav-number">1.</span> <span class="nav-text">心理博弈篇</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E7%9F%A5%E5%8D%8A%E8%A7%A3%E7%AF%87"><span class="nav-number">2.</span> <span class="nav-text">一知半解篇</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Github-Pages"><span class="nav-number">2.1.</span> <span class="nav-text">Github Pages</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">前置条件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Github%E7%9B%B8%E5%85%B3"><span class="nav-number">2.1.1.1.</span> <span class="nav-text">Github相关</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Git%E7%9B%B8%E5%85%B3"><span class="nav-number">2.1.1.2.</span> <span class="nav-text">Git相关</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pages%E5%88%9B%E5%BB%BA"><span class="nav-number">2.1.2.</span> <span class="nav-text">Pages创建</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hexo-NexT"><span class="nav-number">2.2.</span> <span class="nav-text">Hexo NexT</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6-2"><span class="nav-number">2.2.1.</span> <span class="nav-text">前置条件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#NodeJS%E5%AE%89%E8%A3%85"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">NodeJS安装</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Hexo%E5%AE%89%E8%A3%85"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">Hexo安装</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E9%A2%98%E5%AE%89%E8%A3%85"><span class="nav-number">2.2.2.</span> <span class="nav-text">主题安装</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Hexo%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">Hexo初始化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#NexT%E4%B8%BB%E9%A2%98%E5%AE%89%E8%A3%85"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">NexT主题安装</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E5%88%B0Github-Pages"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">部署到Github Pages</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%A4%87%E4%BB%BDHexo"><span class="nav-number">2.2.2.4.</span> <span class="nav-text">备份Hexo</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Typora"><span class="nav-number">2.3.</span> <span class="nav-text">Typora</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AA%E6%80%A7%E5%8C%96%E4%B8%BB%E9%A2%98"><span class="nav-number">2.4.</span> <span class="nav-text">个性化主题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B1%81%E7%84%B6%E5%BC%80%E6%9C%97%E7%AF%87"><span class="nav-number">3.</span> <span class="nav-text">豁然开朗篇</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="treeknows"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">treeknows</p>
+  <div class="site-description" itemprop="description">Let me grow</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/treeknows/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;treeknows&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/treeknows@qq.com" title="E-Mail → treeknows@qq.com"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2023 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">treeknows</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '32px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '22fb59ff85c3aef2677a',
+      clientSecret: '246142feb132313b08ee3ff55678c88244b67b97',
+      repo        : 'treeknows.github.io',
+      owner       : 'treeknows',
+      admin       : ['treeknows'],
+      id          : '467b090be049aa3310846375deb2313f',
+        language: '',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

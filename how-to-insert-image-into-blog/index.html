@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="google-site-verification" content="rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg" />
+<meta name="msvalidate.01" content="41CDEF49B6C0AE7EBCA90FD97E410ADE" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"treeknows.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":-1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。 网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。 我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了PicGo这个应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Github + PicGo + Typora搭建图床">
+<meta property="og:url" content="https://treeknows.github.io/how-to-insert-image-into-blog/index.html">
+<meta property="og:site_name" content="Hi tree">
+<meta property="og:description" content="前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。 网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。 我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了PicGo这个应">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png">
+<meta property="article:published_time" content="2023-04-27T17:20:52.000Z">
+<meta property="article:modified_time" content="2023-12-20T04:02:21.096Z">
+<meta property="article:author" content="treeknows">
+<meta property="article:tag" content="经验">
+<meta property="article:tag" content="PicGo">
+<meta property="article:tag" content="图床搭建">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg">
+
+<link rel="canonical" href="https://treeknows.github.io/how-to-insert-image-into-blog/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Github + PicGo + Typora搭建图床 | Hi tree</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8W35JPL36V"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8W35JPL36V');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hi tree</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做一棵树</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://treeknows.github.io/how-to-insert-image-into-blog/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="treeknows">
+      <meta itemprop="description" content="Let me grow">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hi tree">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Github + PicGo + Typora搭建图床
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-28 01:20:52" itemprop="dateCreated datePublished" datetime="2023-04-28T01:20:52+08:00">2023-04-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-12-20 12:02:21" itemprop="dateModified" datetime="2023-12-20T12:02:21+08:00">2023-12-20</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
+<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
+<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+<span id="more"></span>
+<h2 id="Github">Github</h2>
+<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
+<h2 id="PicGo">PicGo</h2>
+<h3 id="下载">下载</h3>
+<p>下载<a target="_blank" rel="noopener" href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
+<h3 id="配置">配置</h3>
+<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<ul>
+<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
+<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
+<li>Token：需要手动创建
+<ul>
+<li>打开Settings</li>
+<li>左侧菜单最下面点击<code>Developer settings</code></li>
+<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
+<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
+<li>将生成的token复制到PicGo的设置里</li>
+</ul>
+</li>
+</ul>
+<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
+<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
+<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
+<p>参考设置如图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
+<h2 id="Typora">Typora</h2>
+<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
+<p>配置过程为：</p>
+<ul>
+<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
+<li>如下图所示，依次设置：
+<ul>
+<li>图片存储方式：上传图片</li>
+<li>PicGo路径：选择为PicGo的安装路径</li>
+<li>点击<strong>验证图片上传选项</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
+<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
+<p>此时就可以直接复制图片到Typora了。</p>
+<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
+<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
+<p><s>搜索了一下相关问题，在<a target="_blank" rel="noopener" href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
+<blockquote>
+<p><s><strong>使用Typora</strong></s><br>
+<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
+<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
+</blockquote>
+<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
+<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
+<blockquote>
+<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
+</blockquote>
+<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
+<ul>
+<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
+</ul>
+<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
+<p><strong>解决</strong>：修改hosts文件</p>
+<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
+<figure class="highlight accesslog"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></tbody></table></figure>
+<p>重启Typora即可。</p>
+<p>参考自：<a target="_blank" rel="noopener" href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<h2 id="参考">参考</h2>
+<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
+<p><a target="_blank" rel="noopener" href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+
+    </div>
+	 <!-- 文章结束表示语-->
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">---------------------------------The End <i class="fa fa-tree" color="#66FFCC"></i>---------------------------------</div>
+    
+</div>
+      
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\Disable-Screen-Lock-In-Android\" rel="bookmark">Android禁用自动休眠和锁屏</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\birth-of-my-blog\" rel="bookmark">Github Pages + Hexo NexT搭建个人博客</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\personalize-my-site\" rel="bookmark">基于Github Pages + NexT主题的个性化配置</a></div>
+    </li>
+  </ul>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>treeknows
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://treeknows.github.io/how-to-insert-image-into-blog/" title="Github + PicGo + Typora搭建图床">https://treeknows.github.io/how-to-insert-image-into-blog/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BB%8F%E9%AA%8C/" rel="tag"><i class="fa fa-tag"></i> 经验</a>
+              <a href="/tags/PicGo/" rel="tag"><i class="fa fa-tag"></i> PicGo</a>
+              <a href="/tags/%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA/" rel="tag"><i class="fa fa-tag"></i> 图床搭建</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/personalize-my-site/" rel="prev" title="基于Github Pages + NexT主题的个性化配置">
+      <i class="fa fa-chevron-left"></i> 基于Github Pages + NexT主题的个性化配置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Disable-Screen-Lock-In-Android/" rel="next" title="Android禁用自动休眠和锁屏">
+      Android禁用自动休眠和锁屏 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Github"><span class="nav-number">1.</span> <span class="nav-text">Github</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PicGo"><span class="nav-number">2.</span> <span class="nav-text">PicGo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD"><span class="nav-number">2.1.</span> <span class="nav-text">下载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">2.2.</span> <span class="nav-text">配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Typora"><span class="nav-number">3.</span> <span class="nav-text">Typora</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="treeknows"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">treeknows</p>
+  <div class="site-description" itemprop="description">Let me grow</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/treeknows/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;treeknows&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/treeknows@qq.com" title="E-Mail → treeknows@qq.com"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2023 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">treeknows</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '32px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '22fb59ff85c3aef2677a',
+      clientSecret: '246142feb132313b08ee3ff55678c88244b67b97',
+      repo        : 'treeknows.github.io',
+      owner       : 'treeknows',
+      admin       : ['treeknows'],
+      id          : '5281c2f593fd1069b0925c8dfbc63684',
+        language: '',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

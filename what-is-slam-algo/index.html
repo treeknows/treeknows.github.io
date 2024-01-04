@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="google-site-verification" content="rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg" />
+<meta name="msvalidate.01" content="41CDEF49B6C0AE7EBCA90FD97E410ADE" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"treeknows.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":-1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前言 因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。 什么是SLAM算法 SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：  定位 建图  定位即获取自己当前所在空间环境中的位置，建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="认识SLAM算法">
+<meta property="og:url" content="https://treeknows.github.io/what-is-slam-algo/index.html">
+<meta property="og:site_name" content="Hi tree">
+<meta property="og:description" content="前言 因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。 什么是SLAM算法 SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：  定位 建图  定位即获取自己当前所在空间环境中的位置，建">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png">
+<meta property="og:image" content="https://github.githubassets.com/images/icons/emoji/unicode/1f611.png?v8">
+<meta property="article:published_time" content="2023-11-02T17:33:42.000Z">
+<meta property="article:modified_time" content="2023-12-20T04:02:21.096Z">
+<meta property="article:author" content="treeknows">
+<meta property="article:tag" content="Study Notes">
+<meta property="article:tag" content="XR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG">
+
+<link rel="canonical" href="https://treeknows.github.io/what-is-slam-algo/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>认识SLAM算法 | Hi tree</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8W35JPL36V"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8W35JPL36V');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hi tree</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做一棵树</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://treeknows.github.io/what-is-slam-algo/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="treeknows">
+      <meta itemprop="description" content="Let me grow">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hi tree">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          认识SLAM算法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-03 01:33:42" itemprop="dateCreated datePublished" datetime="2023-11-03T01:33:42+08:00">2023-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-12-20 12:02:21" itemprop="dateModified" datetime="2023-12-20T12:02:21+08:00">2023-12-20</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言">前言</h2>
+<p>因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。</p>
+<h2 id="什么是SLAM算法">什么是SLAM算法</h2>
+<p>SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：</p>
+<ul>
+<li>定位</li>
+<li>建图</li>
+</ul>
+<p>定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。</p>
+<span id="more"></span>
+<p>因此，SLAM算法的目标可以总结为：<strong>在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt="SLAM目标"></p>
+<p>SLAM算法的工作内容，可以形象的描述为：</p>
+<p>当我们进入一个未知的环境时，</p>
+<ol>
+<li>特征标记：用”眼睛“观察周围地标，并记住他们的特征。</li>
+<li>在自己的”脑海“中，根据双眼获得的信息，把特征地标在三维地图中重建出来。</li>
+<li>当自己在行走时，不断获取新的特征地标，并且校正头脑中的地图模型。</li>
+<li>根据自己前一段时间行走获得的地表特征，确定自己的位置。</li>
+</ol>
+<p>在此过程中，定位和建图是同时进行的。</p>
+<h3 id="VR中的SLAM">VR中的SLAM</h3>
+<p>VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己在空间中的哪个位置，我在哪里（移动位置x,y,z），我在看哪个方向（旋转角度），同时建图以确定周边的环境是什么样子的。</p>
+<h4 id="定位">定位</h4>
+<p>在VR中，SLAM算法的输出就是<strong>6DOF</strong>(degree of freedom)，即orientation + position。其实这个6DOF指的头6，在VR中还有手6DOF和物体6DOF的概念。</p>
+<h4 id="建图">建图</h4>
+<p>SLAM建立的地图可以分为三种：</p>
+<ul>
+<li>稀疏地图</li>
+<li>稠密地图</li>
+<li>语义地图</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt="slam_map_result"></p>
+<h2 id="SLAM-Overview">SLAM Overview</h2>
+<h3 id="硬件方案">硬件方案</h3>
+<h4 id="6DOF的硬件方案：Inside-Out和Outside-In">6DOF的硬件方案：Inside-Out和Outside-In</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">方案</th>
+<th style="text-align:left">Outside-in 外向内</th>
+<th>Inside-out 内向外</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">原理</td>
+<td style="text-align:left">基于标记，需要固定在外部的追踪设备</td>
+<td>基于无标记，只需VR上的摄像头，使用SLAM算法</td>
+</tr>
+<tr>
+<td style="text-align:center">追踪精度</td>
+<td style="text-align:left">精度高，小于1mm</td>
+<td>精度略低</td>
+</tr>
+<tr>
+<td style="text-align:center">可移动范围</td>
+<td style="text-align:left">仅限于传感器监测范围</td>
+<td>移动范围无限制</td>
+</tr>
+<tr>
+<td style="text-align:center">跟踪死角</td>
+<td style="text-align:left">正常几乎无死角</td>
+<td>有跟踪死角</td>
+</tr>
+<tr>
+<td style="text-align:center">延迟</td>
+<td style="text-align:left">延迟相对少</td>
+<td>有一定延迟</td>
+</tr>
+<tr>
+<td style="text-align:center">抗遮挡</td>
+<td style="text-align:left">易受遮挡影响</td>
+<td>无遮挡问题</td>
+</tr>
+<tr>
+<td style="text-align:center">事前环境准备</td>
+<td style="text-align:left">需要</td>
+<td>不需要</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机">SLAM硬件：相机</h4>
+<table>
+<thead>
+<tr>
+<th>单目相机</th>
+<th>双目相机</th>
+<th>RGB-D相机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成本低</td>
+<td>计算深度</td>
+<td>主动测深度</td>
+</tr>
+<tr>
+<td>距离不受限</td>
+<td>距离不受限</td>
+<td>重建效果好</td>
+</tr>
+<tr>
+<td>尺度不确定性</td>
+<td>配置复杂</td>
+<td>测量范围小</td>
+</tr>
+<tr>
+<td>初始化问题</td>
+<td>计算量大</td>
+<td>受日光和材质干扰</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：-IMU">SLAM硬件： IMU</h4>
+<table>
+<thead>
+<tr>
+<th>加速计</th>
+<th>陀螺仪</th>
+<th>磁力计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检测物体在载体坐标系统独立三轴的加速度信号，对单方向加速度积分即可得到方向速度</td>
+<td>检测载体相对于导航坐标系的角速度信号</td>
+<td>检测载体相对于地球磁场的东南西北方向信号</td>
+</tr>
+<tr>
+<td>”我们又前进了几米“</td>
+<td>”我们转了几圈“</td>
+<td>”我们向西偏北方向“</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机和IMU互补">SLAM硬件：相机和IMU互补</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>IMU</th>
+<th>Camera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优势</td>
+<td>快速响应<br>不受成像质量影响<br>角速度普遍比较准确</td>
+<td>不产生漂移</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>存在零偏<br>低精度IMU积分位姿发散</td>
+<td>受图像遮挡、运动物体干扰<br>快速移动时易丢失</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：摆放要求">SLAM硬件：摆放要求</h4>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt="camera_place"></p>
+<ul>
+<li>下面两个相机是主相机，需要下偏，确保充足的双目重叠</li>
+<li>上面两个相机是辅相机，上偏，扩大跟踪FOV的同时兼顾前方盲区深度</li>
+<li>SLAM双目匹配，以及手柄、手势的主要活动区域，基本是以下面两个相机为主</li>
+<li>四目相机和IMU之间要保证刚性连接，否则一旦发生位移，就需要重新标定</li>
+</ul>
+<h3 id="6DOF标定">6DOF标定</h3>
+<h4 id="标定的目的">标定的目的</h4>
+<p>拿拍照来讲，拍照即为将三维的场景通过某种变换得到一张二维的照片，标定的目的就在于计算出一个数学模型，从而使得通过该数学模型，能够由二维的照片反推出三维的场景。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt="purpose_of_calibration_result"></p>
+<h4 id="标定的好坏">标定的好坏</h4>
+<p>重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt="reprojection_error_result"></p>
+<p>图中<strong>e</strong>即为计算得到的重投影误差值</p>
+<h3 id="SLAM算法模块">SLAM算法模块</h3>
+<ul>
+<li>
+<p>传感器模块：数据采集</p>
+</li>
+<li>
+<p>视觉里程计模块：特征匹配</p>
+</li>
+<li>
+<p>后端模块：消除视觉里程计累计误差</p>
+</li>
+<li>
+<p>地图模块：构建三维地图</p>
+</li>
+<li>
+<p>回环检测模块：空间积累误差消除</p>
+</li>
+</ul>
+<p>SLAM系统可以分为前台线程和后台线程，其中：</p>
+<p>前台线程接收传感器数据，进行SLAM初始化和特征跟踪与位姿实时求解，并输出设备实时位姿和三维点云。</p>
+<p>后台线程进行局部或全局优化，减少误差累积；进行场景回路检测，并支持场景重定位。</p>
+<h3 id="SLAM业务架构">SLAM业务架构</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt="SLAM_ARCH"></p>
+<p>在当前主流的解决方案中，VR Service是比较重要的一个模块。比如高通的QVRService，QVR负责接收sensor的数据，并交由DSP上的SLAM算法做融合，生成的6DOF pose通过QVR传递给SDK/APP端。</p>
+<h3 id="SLAM轨迹误差">SLAM轨迹误差</h3>
+<p>绝对轨迹误差：真实轨迹点和估计轨迹点之间的差值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt="ads_pose_error"></p>
+<p>相对轨迹误差：位姿变化量的插值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt="relative_pose_error"></p>
+<h3 id="SLAM性能指标">SLAM性能指标</h3>
+<table>
+<thead>
+<tr>
+<th>绝对位姿误差</th>
+<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br>最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>相对位姿误差</td>
+<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br>最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
+</tr>
+<tr>
+<td>漂移/draft</td>
+<td>无漂移，出现漂移，精度会非常差</td>
+</tr>
+<tr>
+<td>抖动/jitter</td>
+<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br>最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>延迟 &lt; 5ms</td>
+</tr>
+<tr>
+<td>重定位</td>
+<td>重定位时间 &lt; 1s，位置精度 &lt; 1cm</td>
+</tr>
+<tr>
+<td>追踪范围</td>
+<td>追踪范围 &lt; 10m * 10m</td>
+</tr>
+<tr>
+<td>光照敏感性</td>
+<td>明亮、灰暗、漆黑</td>
+</tr>
+<tr>
+<td>纹理敏感性</td>
+<td>高纹理、低纹理、无纹理</td>
+</tr>
+<tr>
+<td>跟踪敏感性</td>
+<td>位姿多变、快速距离切换、移动物体背景、传感器短暂失效</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Video-See-Through">Video See Through</h2>
+<p>AR/VR显示技术可以分为OST和VST</p>
+<ul>
+<li>OST：光学透视，真实世界通过放置在用户眼前的半透明光学合成器看到的，同时光学合成器也被用来将计算机生成的图像反射到用户的眼睛里，从而将真实世界和虚拟世界结合起来。</li>
+<li>VST：视频透视，通过相机实时捕捉真实画面，再和虚拟世界该呈现的画面融合，最终呈现在显示屏幕上。</li>
+</ul>
+<h2 id="三维重建">三维重建</h2>
+<p>常常被简写为3DR，全称为<strong>3D Reconstruction</strong>，其主要目的为实现更好的交互。</p>
+<h3 id="基本流程">基本流程</h3>
+<p>稀疏点云重建—&gt;稠密点云重建—&gt;点云网格重建—&gt;三维语义重建</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt="3DR_process"></p>
+<p>3DR的实现依赖于很多算法，如场景理解、语义分割、目标识别、位姿估计等</p>
+<h3 id="3DR框架">3DR框架</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt="3DR_framework"></p>
+<p>当前还处于1.0时代，有了平面检测，但是也只是平面的检测，而不是桌面的检测或地面的检测或具体的物体平面。</p>
+<h2 id="后记">后记</h2>
+<p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
+<hr>
+<blockquote>
+<p>总的来讲，行文断断续续，越断越爽，越续越差。<span class="github-emoji"><span>😑</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f611.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span></p>
+</blockquote>
+
+    </div>
+	 <!-- 文章结束表示语-->
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">---------------------------------The End <i class="fa fa-tree" color="#66FFCC"></i>---------------------------------</div>
+    
+</div>
+      
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\ATW-by-Michael-Antonov\" rel="bookmark">ATW概述-by Michael Antonov</a></div>
+    </li>
+  </ul>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>treeknows
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://treeknows.github.io/what-is-slam-algo/" title="认识SLAM算法">https://treeknows.github.io/what-is-slam-algo/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Study-Notes/" rel="tag"><i class="fa fa-tag"></i> Study Notes</a>
+              <a href="/tags/XR/" rel="tag"><i class="fa fa-tag"></i> XR</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Disable-Screen-Lock-In-Android/" rel="prev" title="Android禁用自动休眠和锁屏">
+      <i class="fa fa-chevron-left"></i> Android禁用自动休眠和锁屏
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/ATW-by-Michael-Antonov/" rel="next" title="ATW概述-by Michael Antonov">
+      ATW概述-by Michael Antonov <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFSLAM%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">什么是SLAM算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VR%E4%B8%AD%E7%9A%84SLAM"><span class="nav-number">2.1.</span> <span class="nav-text">VR中的SLAM</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9A%E4%BD%8D"><span class="nav-number">2.1.1.</span> <span class="nav-text">定位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BB%BA%E5%9B%BE"><span class="nav-number">2.1.2.</span> <span class="nav-text">建图</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SLAM-Overview"><span class="nav-number">3.</span> <span class="nav-text">SLAM Overview</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E6%96%B9%E6%A1%88"><span class="nav-number">3.1.</span> <span class="nav-text">硬件方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#6DOF%E7%9A%84%E7%A1%AC%E4%BB%B6%E6%96%B9%E6%A1%88%EF%BC%9AInside-Out%E5%92%8COutside-In"><span class="nav-number">3.1.1.</span> <span class="nav-text">6DOF的硬件方案：Inside-Out和Outside-In</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SLAM%E7%A1%AC%E4%BB%B6%EF%BC%9A%E7%9B%B8%E6%9C%BA"><span class="nav-number">3.1.2.</span> <span class="nav-text">SLAM硬件：相机</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SLAM%E7%A1%AC%E4%BB%B6%EF%BC%9A-IMU"><span class="nav-number">3.1.3.</span> <span class="nav-text">SLAM硬件： IMU</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SLAM%E7%A1%AC%E4%BB%B6%EF%BC%9A%E7%9B%B8%E6%9C%BA%E5%92%8CIMU%E4%BA%92%E8%A1%A5"><span class="nav-number">3.1.4.</span> <span class="nav-text">SLAM硬件：相机和IMU互补</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SLAM%E7%A1%AC%E4%BB%B6%EF%BC%9A%E6%91%86%E6%94%BE%E8%A6%81%E6%B1%82"><span class="nav-number">3.1.5.</span> <span class="nav-text">SLAM硬件：摆放要求</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6DOF%E6%A0%87%E5%AE%9A"><span class="nav-number">3.2.</span> <span class="nav-text">6DOF标定</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E5%AE%9A%E7%9A%84%E7%9B%AE%E7%9A%84"><span class="nav-number">3.2.1.</span> <span class="nav-text">标定的目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E5%AE%9A%E7%9A%84%E5%A5%BD%E5%9D%8F"><span class="nav-number">3.2.2.</span> <span class="nav-text">标定的好坏</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SLAM%E7%AE%97%E6%B3%95%E6%A8%A1%E5%9D%97"><span class="nav-number">3.3.</span> <span class="nav-text">SLAM算法模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SLAM%E4%B8%9A%E5%8A%A1%E6%9E%B6%E6%9E%84"><span class="nav-number">3.4.</span> <span class="nav-text">SLAM业务架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SLAM%E8%BD%A8%E8%BF%B9%E8%AF%AF%E5%B7%AE"><span class="nav-number">3.5.</span> <span class="nav-text">SLAM轨迹误差</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SLAM%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87"><span class="nav-number">3.6.</span> <span class="nav-text">SLAM性能指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Video-See-Through"><span class="nav-number">4.</span> <span class="nav-text">Video See Through</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E7%BB%B4%E9%87%8D%E5%BB%BA"><span class="nav-number">5.</span> <span class="nav-text">三维重建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%B5%81%E7%A8%8B"><span class="nav-number">5.1.</span> <span class="nav-text">基本流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3DR%E6%A1%86%E6%9E%B6"><span class="nav-number">5.2.</span> <span class="nav-text">3DR框架</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">6.</span> <span class="nav-text">后记</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="treeknows"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">treeknows</p>
+  <div class="site-description" itemprop="description">Let me grow</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/treeknows/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;treeknows&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/treeknows@qq.com" title="E-Mail → treeknows@qq.com"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2023 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">treeknows</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '32px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '22fb59ff85c3aef2677a',
+      clientSecret: '246142feb132313b08ee3ff55678c88244b67b97',
+      repo        : 'treeknows.github.io',
+      owner       : 'treeknows',
+      admin       : ['treeknows'],
+      id          : 'd0f2d3335435378bfaf3baf5c3bbdd00',
+        language: '',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

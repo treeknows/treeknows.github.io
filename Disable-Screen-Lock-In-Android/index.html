@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="google-site-verification" content="rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg" />
+<meta name="msvalidate.01" content="41CDEF49B6C0AE7EBCA90FD97E410ADE" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"treeknows.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":-1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="考古以前放在有道的笔记，仅作记录  休眠 所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android禁用自动休眠和锁屏">
+<meta property="og:url" content="https://treeknows.github.io/Disable-Screen-Lock-In-Android/index.html">
+<meta property="og:site_name" content="Hi tree">
+<meta property="og:description" content="考古以前放在有道的笔记，仅作记录  休眠 所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-10-24T14:29:05.000Z">
+<meta property="article:modified_time" content="2023-12-20T04:02:21.095Z">
+<meta property="article:author" content="treeknows">
+<meta property="article:tag" content="Android Framework">
+<meta property="article:tag" content="经验">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://treeknows.github.io/Disable-Screen-Lock-In-Android/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Android禁用自动休眠和锁屏 | Hi tree</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8W35JPL36V"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8W35JPL36V');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hi tree</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">做一棵树</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://treeknows.github.io/Disable-Screen-Lock-In-Android/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="treeknows">
+      <meta itemprop="description" content="Let me grow">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hi tree">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android禁用自动休眠和锁屏
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-24 22:29:05" itemprop="dateCreated datePublished" datetime="2023-10-24T22:29:05+08:00">2023-10-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-12-20 12:02:21" itemprop="dateModified" datetime="2023-12-20T12:02:21+08:00">2023-12-20</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>考古以前放在有道的笔记，仅作记录</p>
+</blockquote>
+<h4 id="休眠">休眠</h4>
+<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
+<span id="more"></span>
+<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
+<p>具体的流程分析，// TODO</p>
+<p>先帖两篇相关的博客：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a target="_blank" rel="noopener" href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
+<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
+<figure class="highlight gradle"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h4 id="锁屏">锁屏</h4>
+<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
+<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
+<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> {                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">"lockscreen.disabled"</span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
+<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
+<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
+<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
+<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
+<figure class="highlight typescript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    } <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) {</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    }    </span><br><span class="line">}        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) {                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) {</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">"lock_settings"</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    }                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">}                     </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
+<figure class="highlight reasonml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">"1"</span>)<span class="operator"> || </span>value.equals(<span class="string">"true"</span>));</span><br><span class="line">}               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> {      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">"1"</span> : <span class="string">"0"</span>;</span><br><span class="line">        } finally {</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        }          </span><br><span class="line">    }              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) {</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">}              </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
+<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
+<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> {                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() {</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> {         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">"ro.lockscreen.disable.default"</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) {                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">"1"</span>, <span class="number">0</span>);</span><br><span class="line">            }                                               </span><br><span class="line">        }                                                   </span><br><span class="line">    });                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">}                                                           </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
+<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
+<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">"ro.build.keys=<span class="variable">$BUILD_KEYS</span>"</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">"<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">"ro.lockscreen.disable.default=true"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>"</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
+<blockquote>
+<p>血与泪的教训：-(</p>
+</blockquote>
+
+    </div>
+	 <!-- 文章结束表示语-->
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">---------------------------------The End <i class="fa fa-tree" color="#66FFCC"></i>---------------------------------</div>
+    
+</div>
+      
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\how-to-insert-image-into-blog\" rel="bookmark">Github + PicGo + Typora搭建图床</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\birth-of-my-blog\" rel="bookmark">Github Pages + Hexo NexT搭建个人博客</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\personalize-my-site\" rel="bookmark">基于Github Pages + NexT主题的个性化配置</a></div>
+    </li>
+  </ul>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>treeknows
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://treeknows.github.io/Disable-Screen-Lock-In-Android/" title="Android禁用自动休眠和锁屏">https://treeknows.github.io/Disable-Screen-Lock-In-Android/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Android-Framework/" rel="tag"><i class="fa fa-tag"></i> Android Framework</a>
+              <a href="/tags/%E7%BB%8F%E9%AA%8C/" rel="tag"><i class="fa fa-tag"></i> 经验</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/how-to-insert-image-into-blog/" rel="prev" title="Github + PicGo + Typora搭建图床">
+      <i class="fa fa-chevron-left"></i> Github + PicGo + Typora搭建图床
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/what-is-slam-algo/" rel="next" title="认识SLAM算法">
+      认识SLAM算法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%91%E7%9C%A0"><span class="nav-number">1.</span> <span class="nav-text">休眠</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%81%E5%B1%8F"><span class="nav-number">2.</span> <span class="nav-text">锁屏</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="treeknows"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">treeknows</p>
+  <div class="site-description" itemprop="description">Let me grow</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/treeknows/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;treeknows&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/treeknows@qq.com" title="E-Mail → treeknows@qq.com"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2023 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">treeknows</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var canonicalURL, curProtocol;
+      //Get the <link> tag
+      var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+    //Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+      //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+      !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '32px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '22fb59ff85c3aef2677a',
+      clientSecret: '246142feb132313b08ee3ff55678c88244b67b97',
+      repo        : 'treeknows.github.io',
+      owner       : 'treeknows',
+      admin       : ['treeknows'],
+      id          : '0f81fa338111524a7fc91b240feec4e6',
+        language: '',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

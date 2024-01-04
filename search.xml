@@ -1,0 +1,1266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Android禁用自动休眠和锁屏</title>
+    <url>/Disable-Screen-Lock-In-Android/</url>
+    <content><![CDATA[<blockquote>
+<p>考古以前放在有道的笔记，仅作记录</p>
+</blockquote>
+<h4 id="休眠">休眠</h4>
+<p>所谓自动休眠，就是指用户长时间内没有跟设备进行交互，然后触发了自动息屏流程。</p>
+<span id="more"></span>
+<p>而按power键灭屏或者自动息屏事件都是在<strong>PowerManagerService</strong>中处理的。</p>
+<p>具体的流程分析，// TODO</p>
+<p>先帖两篇相关的博客：<a href="https://www.jianshu.com/p/9241f3a91095">https://www.jianshu.com/p/9241f3a91095</a> &amp;&amp; <a href="https://www.cnblogs.com/rainey-forrest/p/13292638.html">https://www.cnblogs.com/rainey-forrest/p/13292638.html</a></p>
+<p>总之，在<strong>PowerManagerService</strong>的<code>updateUserActivitySummaryLocked</code>方法中，会计算用户没有活动的时间，当这个时间达到用户设置的<strong>timeout</strong>时，就会触发休眠流程。用户设置的休眠时间通过<code>getScreenOffTimeoutLocked</code>获取，在<code>getScreenOffTimeoutLocked</code>中，发现有一个系统最小的屏幕超时变量<code>mMinimumScreenOffTimeoutConfig</code>，这个值在<em>frameworks/base/core/res/res/values/config.xml</em>中的<code>config_minimumScreenOffTimeout</code>定义，所以，我们实现禁止设备自动休眠的方法为，将这个<code>config_minimumScreenOffTimeout</code>设置为尽可能大的值。</p>
+<figure class="highlight gradle"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values<span class="regexp">/config.xml b/</span>core<span class="regexp">/res/</span>res<span class="regexp">/values/</span>config.xml</span><br><span class="line">index <span class="number">1170</span>fbe..e4ac8d7 <span class="number">100644</span></span><br><span class="line">--- a<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">+++ b<span class="regexp">/core/</span>res<span class="regexp">/res/</span>values/config.xml</span><br><span class="line">@@ -<span class="number">2428</span>,<span class="number">7</span> +<span class="number">2428</span>,<span class="number">7</span> @@</span><br><span class="line">          <span class="keyword">This</span> value must be greater than zero, otherwise the device will immediately</span><br><span class="line">          fall asleep again as soon as it is awoken.</span><br><span class="line">     --&gt;</span><br><span class="line">-    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">10000</span>&lt;/integer&gt;</span><br><span class="line">+    &lt;integer name=<span class="string">"config_minimumScreenOffTimeout"</span>&gt;<span class="number">2147483647</span>&lt;/integer&gt;</span><br><span class="line"> </span><br><span class="line">     &lt;!-- User activity timeout: Maximum screen dim duration in milliseconds.</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h4 id="锁屏">锁屏</h4>
+<p>锁屏出现的时机：<strong>LockScreen is shown after reboot or after screen timeout / short press on power</strong>.  // 来自源码<code>LockPatternUtils.java</code>中的注释</p>
+<p>那么当我们浏览一下<code>LockPatternUtils.java</code>时，就会发现其中有一个<code>isLockScreenDisabled</code>方法，也就是说，Android系统是支持默认禁用锁屏功能的。</p>
+<p>那么当我们看<code>isLockScreenDisabled</code>方法的内容时，就会发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">LockPatternUtils.java</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Determine if LockScreen is disabled for the current user. This is used to decide whether</span></span><br><span class="line"><span class="comment"> * LockScreen is shown after reboot or after screen timeout / short press on power.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if lock screen is disabled</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isLockScreenDisabled</span><span class="params">(<span class="type">int</span> userId)</span> {                                              </span><br><span class="line">    <span class="keyword">if</span> (isSecure(userId)) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">disabledByDefault</span> <span class="operator">=</span> mContext.getResources().getBoolean(</span><br><span class="line">            com.android.internal.R.bool.config_disableLockscreenByDefault);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isSystemUser</span> <span class="operator">=</span> UserManager.isSplitSystemUser() &amp;&amp; userId == UserHandle.USER_SYSTEM;</span><br><span class="line">    <span class="type">UserInfo</span> <span class="variable">userInfo</span> <span class="operator">=</span> getUserManager().getUserInfo(userId);</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">isDemoUser</span> <span class="operator">=</span> UserManager.isDeviceInDemoMode(mContext) &amp;&amp; userInfo != <span class="literal">null</span></span><br><span class="line">            &amp;&amp; userInfo.isDemo();</span><br><span class="line">    <span class="keyword">return</span> getBoolean(DISABLE_LOCKSCREEN_KEY, <span class="literal">false</span>, userId)</span><br><span class="line">            || (disabledByDefault &amp;&amp; !isSystemUser)</span><br><span class="line">            || isDemoUser;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DISABLE_LOCKSCREEN_KEY</span> <span class="operator">=</span> <span class="string">"lockscreen.disabled"</span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>发现有个<code>disabledByDefault</code>变量，它在初始化的时候，也是从<strong>config.xml</strong>中获取的初始值，那么理论上可以通过修改<code>config_disableLockscreenByDefault</code>的值为true去实现禁用锁屏。</p>
+<p>之所以说理论上，是因为我没有去试，这里需要一个有缘人验证可行性。</p>
+<p>回过头来看这个方法的return部分，用到了两个逻辑或，也就是说，三个不同的表达式，只要有一个为true，这个方法就会返回true。</p>
+<p><code>isDemoUser</code>可能涉及到Android的多用户或者什么特殊模式，不去深究。</p>
+<p>所以剩下一个<code>getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)</code>可以探索。</p>
+<figure class="highlight typescript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> <span class="title function_">getBoolean</span>(<span class="params"><span class="built_in">String</span> secureSettingKey, <span class="built_in">boolean</span> defaultValue, int userId</span>) {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_">getLockSettings</span>().<span class="title function_">getBoolean</span>(secureSettingKey, defaultValue, userId);</span><br><span class="line">    } <span class="keyword">catch</span> (<span class="title class_">RemoteException</span> re) {</span><br><span class="line">        <span class="keyword">return</span> defaultValue;</span><br><span class="line">    }    </span><br><span class="line">}        </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@UnsupportedAppUsage</span>  </span><br><span class="line"><span class="meta">@VisibleForTesting</span>    </span><br><span class="line"><span class="keyword">public</span> <span class="title class_">ILockSettings</span> <span class="title function_">getLockSettings</span>(<span class="params"></span>) {                       </span><br><span class="line">    <span class="keyword">if</span> (mLockSettingsService == <span class="literal">null</span>) {</span><br><span class="line">        <span class="title class_">ILockSettings</span> service = <span class="title class_">ILockSettings</span>.<span class="property">Stub</span>.<span class="title function_">asInterface</span>(</span><br><span class="line">                <span class="title class_">ServiceManager</span>.<span class="title function_">getService</span>(<span class="string">"lock_settings"</span>));</span><br><span class="line">        mLockSettingsService = service;</span><br><span class="line">    }                 </span><br><span class="line">    <span class="keyword">return</span> mLockSettingsService;</span><br><span class="line">}                     </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>在<code>getBoolean</code>方法中，调用了<code>LockSettingsService.java</code>的<code>getBoolean</code>方法，<code>getLockSettings()</code>方法中获取了<code>ILockSettings</code>的Binder代理对象，具体实现在<code>LockSettingsService.java</code>中。</p>
+<figure class="highlight reasonml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="module-access"><span class="module"><span class="identifier">LockSettingsService</span>.</span></span>java</span><br><span class="line"></span><br><span class="line">@Override       </span><br><span class="line">public boolean get<span class="constructor">Boolean(String <span class="params">key</span>, <span class="params">boolean</span> <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    check<span class="constructor">ReadPermission(<span class="params">key</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    String value = get<span class="constructor">StringUnchecked(<span class="params">key</span>, <span class="params">null</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">    return <span class="module-access"><span class="module"><span class="identifier">TextUtils</span>.</span></span>is<span class="constructor">Empty(<span class="params">value</span>)</span> ?</span><br><span class="line">            defaultValue : (value.equals(<span class="string">"1"</span>)<span class="operator"> || </span>value.equals(<span class="string">"true"</span>));</span><br><span class="line">}               </span><br><span class="line"></span><br><span class="line">public String get<span class="constructor">StringUnchecked(String <span class="params">key</span>, String <span class="params">defaultValue</span>, <span class="params">int</span> <span class="params">userId</span>)</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Settings</span>.</span><span class="module"><span class="identifier">Secure</span>.</span><span class="module"><span class="identifier">LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        long ident = <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>clear<span class="constructor">CallingIdentity()</span>;</span><br><span class="line">        <span class="keyword">try</span> {      </span><br><span class="line">            return mLockPatternUtils.is<span class="constructor">LockPatternEnabled(<span class="params">userId</span>)</span> ? <span class="string">"1"</span> : <span class="string">"0"</span>;</span><br><span class="line">        } finally {</span><br><span class="line">            <span class="module-access"><span class="module"><span class="identifier">Binder</span>.</span></span>restore<span class="constructor">CallingIdentity(<span class="params">ident</span>)</span>;</span><br><span class="line">        }          </span><br><span class="line">    }              </span><br><span class="line">                   </span><br><span class="line">    <span class="keyword">if</span> (userId<span class="operator"> == </span>USER_FRP) {</span><br><span class="line">        return get<span class="constructor">FrpStringUnchecked(<span class="params">key</span>)</span>;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">LockPatternUtils</span>.</span><span class="module"><span class="identifier">LEGACY_LOCK_PATTERN_ENABLED</span>.</span></span>equals(key)) {</span><br><span class="line">        key = Settings.Secure.LOCK_PATTERN_ENABLED;</span><br><span class="line">    }          </span><br><span class="line">               </span><br><span class="line">    return mStorage.read<span class="constructor">KeyValue(<span class="params">key</span>, <span class="params">defaultValue</span>, <span class="params">userId</span>)</span>;</span><br><span class="line">}              </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>看<code>getBoolean</code>的具体实现，通过<code>getStringUnchecked</code>方法获取返回值。<code>mStorage</code>是<code>LockSettingsStorage</code>的实例，大概是用来保存一些跟锁屏相关的设置，可能会包括PIN、Password等吧。</p>
+<p>看到这里发现是去读某个key的值，这个key的传参为<code>DISABLE_LOCKSCREEN_KEY</code>，那么我们可以看一下是在哪里write的<code>DISABLE_LOCKSCREEN_KEY</code>的值。</p>
+<p>直接在<code>LockSettingsService.java</code>里搜索<code>DISABLE_LOCKSCREEN_KEY</code>，write相关的共有三处，其中的一处我们发现：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> LockSettingsStorage <span class="title function_">getStorage</span><span class="params">()</span> {                   </span><br><span class="line">    <span class="keyword">final</span> <span class="type">LockSettingsStorage</span> <span class="variable">storage</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>(mContext);</span><br><span class="line">    storage.setDatabaseOnCreateCallback(<span class="keyword">new</span> <span class="title class_">LockSettingsStorage</span>.Callback() {</span><br><span class="line">        <span class="meta">@Override</span>                                           </span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initialize</span><span class="params">(SQLiteDatabase db)</span> {         </span><br><span class="line">            <span class="comment">// Get the lockscreen default from a system property, if available</span></span><br><span class="line">            <span class="type">boolean</span> <span class="variable">lockScreenDisable</span> <span class="operator">=</span> SystemProperties.getBoolean(</span><br><span class="line">                    <span class="string">"ro.lockscreen.disable.default"</span>, <span class="literal">false</span>);</span><br><span class="line">            <span class="keyword">if</span> (lockScreenDisable) {                        </span><br><span class="line">                storage.writeKeyValue(db, LockPatternUtils.DISABLE_LOCKSCREEN_KEY, <span class="string">"1"</span>, <span class="number">0</span>);</span><br><span class="line">            }                                               </span><br><span class="line">        }                                                   </span><br><span class="line">    });                                                     </span><br><span class="line">    <span class="keyword">return</span> storage;                                         </span><br><span class="line">}                                                           </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><code>mStorage</code>初始化的时候，调用到这个<code>getStorage</code>方法，其中会根据一个属性的值，设置<code>DISABLE_LOCKSCREEN_KEY</code>的值</p>
+<p>也就是说，只要<code>ro.lockscreen.disable.default</code>为true，<code>DISABLE_LOCKSCREEN_KEY</code>也会设置为1，也就是true，也就是系统默认禁用了锁屏功能。</p>
+<p>所以我们只需要将<code>ro.lockscreen.disable.default</code>设置为true，就可以禁用锁屏了.</p>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh</span><br><span class="line">index 9d81dee..e45a441 100755</span><br><span class="line">--- a/tools/buildinfo.sh</span><br><span class="line">+++ b/tools/buildinfo.sh</span><br><span class="line">@@ -8,6 +8,7 @@ <span class="built_in">echo</span> <span class="string">"ro.build.keys=<span class="variable">$BUILD_KEYS</span>"</span></span><br><span class="line"> <span class="keyword">if</span> [ -n <span class="string">"<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span> ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.display_build_number=<span class="variable">$DISPLAY_BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">+<span class="built_in">echo</span> <span class="string">"ro.lockscreen.disable.default=true"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.incremental=<span class="variable">$BUILD_NUMBER</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.sdk=<span class="variable">$PLATFORM_SDK_VERSION</span>"</span></span><br><span class="line"> <span class="built_in">echo</span> <span class="string">"ro.build.version.preview_sdk=<span class="variable">$PLATFORM_PREVIEW_SDK_VERSION</span>"</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>注意，刷机验证的时候需要把userdata.img刷进去，不然是不会生效的。</p>
+<blockquote>
+<p>血与泪的教训：-(</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Framework</category>
+      </categories>
+      <tags>
+        <tag>Android Framework</tag>
+        <tag>经验</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Github + PicGo + Typora搭建图床</title>
+    <url>/how-to-insert-image-into-blog/</url>
+    <content><![CDATA[<p>前面两篇博客介绍了个人博客搭建的过程，接下来就可以写博客了。但是写博客不可避免的需要用到一些图片，所以拥有一个图床是非常重要的事情。</p>
+<p>网上有一些免费的图床，但是存在挂掉的风险。也有一些付费的云，如七牛、阿里云等，但是比较麻烦，需要花时间去研究怎么使用，可能在传图片的时候也需要手动操作许多步骤。</p>
+<p>我个人比较倾向于使用Github作为图床，主打一个免费+稳定。然后在Typora中发现了<strong>PicGo</strong>这个应用，可以简化上传的动作。所以决定采用<strong>GitHub + PicGo + Typora</strong>搭建一个图床，方便日后博客使用图片。</p>
+<span id="more"></span>
+<h2 id="Github">Github</h2>
+<p>首先需要在GitHub上创建repo，权限为需要设置为<code>public</code>，用于存放图片。具体过程不表。</p>
+<h2 id="PicGo">PicGo</h2>
+<h3 id="下载">下载</h3>
+<p>下载<a href="https://github.com/Molunerfinn/PicGo/releases/tag/v2.3.1">PicGo v2.3.1</a>，这是最新的release版本，选择合适的格式下载，下载完成后安装。</p>
+<h3 id="配置">配置</h3>
+<p>打开PicGo，图床设置选择GitHub，有三个必须的配置</p>
+<ul>
+<li>仓库名：填写为<code>GitHub_username/repo_name</code></li>
+<li>分支名：填写分支名，一般新建的repo默认分支为<code>master</code>或<code>main</code>，可以在repo的settings界面查看</li>
+<li>Token：需要手动创建
+<ul>
+<li>打开Settings</li>
+<li>左侧菜单最下面点击<code>Developer settings</code></li>
+<li>选择<code>Personal access tokens</code>下的<code>Tokens(classic)</code></li>
+<li>点击右侧<code>Generate new token</code>按钮，选择classic</li>
+<li>将生成的token复制到PicGo的设置里</li>
+</ul>
+</li>
+</ul>
+<p>保存配置之后就可以上传图片了。打开上传区，选择一张图片，拖住上传。上传成功后会将URL复制到剪贴板。登陆Github看到图片已经成功上传了。</p>
+<p>此时图片上传到了repo的根目录，如果想要上传至指定的目录，可以在PicGo设置界面<strong>设定存储路径</strong>，如设置为<code>imgs/</code>，图片便会上传至repo下的imgs目录。注意一定要加<code>/</code>，否则变得是图片名字，而不是图片存储的路径。</p>
+<p>还有一个配置是<strong>自定义域名</strong>，这个在一开始配置时是不需要动的。如果后续需要使用CDN加快图片访问速度，可以去修改</p>
+<p>参考设置如图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/PicGo_settings.jpg" alt="PicGo_settings"></p>
+<h2 id="Typora">Typora</h2>
+<p>Typora支持了PicGo上传图片，也就是意味着只要复制粘贴图片到Typora，就可以自动使用PicGo上传图片并生成链接，十分方便。</p>
+<p>配置过程为：</p>
+<ul>
+<li>Typora左上角一次点击<strong>文件-&gt;偏好设置-&gt;图像</strong></li>
+<li>如下图所示，依次设置：
+<ul>
+<li>图片存储方式：上传图片</li>
+<li>PicGo路径：选择为PicGo的安装路径</li>
+<li>点击<strong>验证图片上传选项</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/image-20230507204623740.png" alt="image-20230507204623740"></p>
+<p>Typora会自动验证上传，一般情况下都会成功的。不需要额外配置什么。</p>
+<p>此时就可以直接复制图片到Typora了。</p>
+<p>但是会有一个问题，图片上传成功，但是无法在Typora预览。</p>
+<p>从网上随便找了一张图片，复制链接到Typora，发现是可以正常预览的。那么可以定位问题出在域名上。</p>
+<p><s>搜索了一下相关问题，在<a href="http://www.duheweb.com/post/20210421125522.html">一篇博客</a>中找到了一种解释：</s></p>
+<blockquote>
+<p><s><strong>使用Typora</strong></s><br>
+<s>上面的设置完成后，在 Typora 里插入图片时会把图片复制到本地的指定目录，待编辑完md文件后再选择格式 -&gt; 图像 -&gt;上传所有本地图片，就可以自动把md文件里的图片上传到github，并自动把图像的URL更换。不设置为插入图片就自动上传是因为上传到github后，自定义的图片URL生效需要一段时间，URL没生效时在Typora里无法预览图片。</s></p>
+<p><s>注意：typora 在线预览github图片失败是因为自定义的URL还不能访问，而typora没有自动刷新远程图片的功能，稍等一下重启md文件，就能看到typora把github图片加载出来了。</s></p>
+</blockquote>
+<p><s>但是个人认为有一些出入的地方，复制图片的链接到浏览器的地址栏，是可以正常打开图片，看起来不像是URL无法访问的问题。</s></p>
+<p><s>同时在GitHub上找了一些类似链接的图片，同样无法预览，所以有可能是<strong>无法访问GitHub</strong>的原因，可能需要挂VPN在测试一下。</s></p>
+<blockquote>
+<p><s>不巧这台电脑没有VPN客户端，只能后面再试了。</s></p>
+</blockquote>
+<p><s>尽管在博客中的解释并不能让我信服，但是它提供的一种思路是可以借鉴的：</s></p>
+<ul>
+<li><s>文件-&gt;偏好设置-&gt;图像中，<strong>插入图片时</strong>不要设置为上传图片，而设置为复制到指定路径，然后在本地建立一个文件夹存放图片，此时插入图片是可以正常预览的。然后在编辑完成之后，点击<strong>格式-&gt;图像-&gt;上传所有本地图片</strong>，将本地图片统一上传。</s></li>
+</ul>
+<p><s>另一种可能的解决方式就是，PicGo中配置自定义域名，使用CDN加速，可能能解决这个问题。</s></p>
+<p><strong>解决</strong>：修改hosts文件</p>
+<p>原因是github屏蔽掉了图片，添加以下内容到本地的hosts文件</p>
+<figure class="highlight accesslog"><table><tbody><tr><td class="code"><pre><span class="line"><span class="number">185.199.108.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.109.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.110.133</span> raw.githubusercontent.com</span><br><span class="line"><span class="number">185.199.111.133</span> raw.githubusercontent.com</span><br></pre></td></tr></tbody></table></figure>
+<p>重启Typora即可。</p>
+<p>参考自：<a href="https://blog.csdn.net/Bilal_0/article/details/126078013">博客</a></p>
+<h2 id="参考">参考</h2>
+<p>本文只是简略记录了一下过程，详细的可以参考以下：</p>
+<p><a href="https://picgo.github.io/PicGo-Doc/zh/guide/config.html#github%E5%9B%BE%E5%BA%8A">PicGo官方教程</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/489236769">知乎上的一个教程</a></p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>PicGo</tag>
+        <tag>图床搭建</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ATW概述-by Michael Antonov</title>
+    <url>/ATW-by-Michael-Antonov/</url>
+    <content><![CDATA[<hr>
+<p><strong>翻译文章，原文链接：<a href="https://developer.oculus.com/blog/asynchronous-timewarp-examined/">Asynchronous Timewarp Examined</a></strong></p>
+<p><strong>Written by: Michael Antonov • 2015年3月3日</strong></p>
+<hr>
+<p>文章格式安排如下：</p>
+<blockquote>
+<p>英文原文</p>
+</blockquote>
+<p>中文译文</p>
+<p>（自言自语）</p>
+<hr>
+<blockquote>
+<p><em><strong>TL;DR:</strong> Asynchronous timewarp (ATW) is a technique that generates intermediate frames in situations when the game can’t maintain frame rate, helping to reduce judder. However, ATW is not a silver bullet and has limitations that developers should be aware of.</em></p>
+</blockquote>
+<p><em>Too long, don’t read. 异步时间扭曲(ATW)是一种在游戏无法保持帧率时生成中间帧的技术，帮助减少抖动。然而，ATW并不是万能的，它也有一些局限性，开发人员应当知晓。</em></p>
+<span id="more"></span>
+<blockquote>
+<p><strong>Intro</strong></p>
+<p>Over the past year there’s been a lot of excitement around asynchronous timewarp (ATW). Many hoped that ATW would allow engines to run and render at a lower frame rate, using ATW to artificially fill in dropped frames without a significant drop in the VR quality.</p>
+<p>On Gear VR Innovator Edition, ATW has been a key part of delivering a great experience. Unfortunately, it turns out there are intrinsic limitations and technical challenges that prevent ATW from being a universal solution for judder on PC VR systems with positional tracking like the Rift. Under some conditions, the perceptual effects of timewarp judder in VR can be almost as bad as judder due to skipped frames.</p>
+<p>In this blog, we analyze these limitations and situations that cause particular difficulties. As you’ll see, while ATW may be helpful at times, there is no substitute for hitting the full frame rate when it comes to delivering great VR.</p>
+</blockquote>
+<p><strong>介绍</strong></p>
+<p>过去一年里人们对ATW表现出了很大的兴奋。许多人希望ATW能让引擎以更低的帧率运行和渲染，利用ATW认为的补充丢帧，而不会明显降低VR的质量。</p>
+<p>在Gear VR创新版上，ATW成为了提供出色体验的关键部分。遗憾的是，由于存在一些内在限制和技术难题，ATW无法成为解决像Rift等带有位置追踪功能的PC VR系统上抖动问题的通用方案。在一些情况下，在虚拟现实中应用ATW后的效果和由跳帧引起的抖动效果一样糟糕。</p>
+<p>在本博客中，我们将分析这些限制以及造成特殊困难的情况。正如你将看到的，ATW有时可能是有帮助的，但要提供出色的VR效果，全帧率是无可替代的。</p>
+<p>（应该是指，帧率拉满的效果是ATW望尘莫及的）</p>
+<blockquote>
+<p><strong>Timewarp, Asynchronous Timewarp, and Judder</strong></p>
+<p>Timewarp is a technique that warps the rendered image before sending it to the display in order to correct for head motion that occurred after the scene was rendered and thereby reduce the perceived latency. The basic version of this is orientation-only timewarp, in which only the rotational change in the head pose is corrected for; this has the considerable advantage of being a 2D warp, so it does not cost much performance when combined with the distortion pass. For reasonably complex scenes, this can be done with much less computation than rendering a whole new frame.</p>
+</blockquote>
+<p><strong>时间扭曲、异步时间扭曲和抖动</strong></p>
+<p>TW是一种技术，在送显之前将渲染过的图像扭曲，从而纠正场景渲染后（渲染后到送显前这一段）发生的头部运动，减少感知延迟。最基础的时间扭曲是基于朝向（头部）的，这种方式只对头部姿势的旋转变化进行了校正。这种方法的显著优点是这是二维的扭曲，在与畸变矫正结合时不会太影响性能。对于相当复杂的场景，这比渲染一帧全新画面所需的计算量要少得多。</p>
+<blockquote>
+<p>Asynchronous timewarp refers to doing this on another thread in parallel (i.e. asynchronously) with rendering. Before every vsync, the ATW thread generates a new timewarped frame from the latest frame completed by the rendering thread.</p>
+</blockquote>
+<p>ATW是指在一条和渲染线程并行的（扭曲）线程上工作。在每次VSync之前，ATW线程基于渲染线程完成的最新帧生成一帧扭曲过的帧。</p>
+<blockquote>
+<p>Judder and its consequences are covered in detail by Michael Abrash in his <a href="http://blogs.valvesoftware.com/abrash/">2013 blog posts here</a>. Reviewing Michael’s notes on judder would be helpful to get the most out of this post.</p>
+</blockquote>
+<p>Michael Abrash（作者本人）在其 2013 年的博文（原文中贴的链接已失效）中详细介绍了抖动及其后果。阅读迈克尔关于抖动的笔记将有助于您更好地理解本篇文章。</p>
+<blockquote>
+<p>In order to produce a perceptually correct representation of the virtual world, the images on the displays must be updated with every vsync refresh. However, if rendering takes too long, a frame will be missed, resulting in judder. This is because when no new frame has been rendered, the video adapter scans out the same image a second time. Here is what an object location looks like if the same rendered frame is displayed two frames in a row before updating:</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><em>Here, the eye is rotating to the left. When the same image is displayed again, its light falls on a different part of the retina, resulting in double image judder.</em></p>
+</blockquote>
+<p>为了在虚拟世界呈现正确的感知，屏幕图像必须在每次VSync时刷新。然而，如果渲染耗费太长时间，就会错过一帧，这就导致了抖动。这是因为当没有渲染新的帧时，视频适配器对同一张图像进行了二次扫描。在更新前连续显示同一渲染帧时，对象位置的情况如下图所示：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/double-image-judder.jpg" alt="double-image-judder"></p>
+<p><em>在这里，眼睛向左旋转。当再次显示同一图像时，光线落在视网膜的不同部分，导致重影抖动。</em></p>
+<blockquote>
+<p>Of course, doubling is not the only possible effect. If we displayed the same frame three times in a row, you would get a triple image on your retina and so on.</p>
+</blockquote>
+<p>当然，重影不是唯一可能的效果。如果我们连续显示同一帧三次，你会看到三重图像，以此类推。</p>
+<blockquote>
+<p>Orientation-only ATW can be used to help address judder: if the rendered game frame is not submitted before vsync, timewarp can interrupt and generate the image instead, by warping the last frame to reflect the head motion since the last frame was rendered. Although this new image will not be exactly correct, it will have been adjusted for head rotation, so displaying it will reduce judder as compared to displaying the original frame again, which is what would have happened without ATW.</p>
+</blockquote>
+<p>基于方向的ATW可以帮助解决抖动问题：如果渲染的游戏帧没有在VSync到来前提交，TW会中断（渲染线程）并生成图像，通过扭曲最后一帧来代表最后一帧以来的头部运动。虽然新的图像并不完全正确，但它已经根据头部旋转进行了调整，因此显示这一帧（扭曲生成的帧）相比在没有ATW的情况下显示同一帧（上一帧），可以减少抖动。</p>
+<blockquote>
+<p>In certain situations, simple rotation-warping can work well. It has been implemented on Gear VR Innovator Edition, where it fills in the frames whenever games can’t meet the frame rate. This smooths many glitches to the point where they’re mostly not noticeable. Because Gear VR lacks position tracking and the content generally avoids near-field objects, many of the artifacts discussed below are lessened or avoided.</p>
+</blockquote>
+<p>在某些确定的场景下，简单的旋转-扭曲效果会很好。在Gear VR创新版上已经实现：当游戏帧无法满足要求时，它就会填充帧数。这使许多故障变得平滑，在大多数情况下都不易察觉。由于 Gear VR 缺乏位置跟踪功能，而且内容一般都会避开近场物体，因此下面讨论的许多假象都会减少或避免。</p>
+<p>（在计算机图形学中，我们以绘制出以假乱真的图景为目标，但是经常会绘制出来锯齿状边缘，或者一些颜色错误，我们会称之为<strong>artifact</strong>，意思是这里绘制得不自然）</p>
+<blockquote>
+<p>There are several reasons why ATW on the PC is significantly more challenging than on Gear VR, starting with the Rift’s support for positional tracking.</p>
+</blockquote>
+<p>PC 上的 ATW 比 Gear VR 上的更具挑战性，原因有几个，首先是 Rift 支持定位追踪。</p>
+<blockquote>
+<p><strong>Positional Judder</strong></p>
+<p>Positional judder is one of the most obvious artifacts with orientation-only timewarp. When you move your head, only the additional rotational component is reflected in the ATW-generated images, while any translational head movement since the frame was rendered is ignored. This means that as you move your head from side to side, or even just rotate your head which translates your eyes, you will see multiple-image judder on objects that are close to you. The effect is very noticeable in spaces with near field objects, such as the submarine screenshot below.</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+</blockquote>
+<p><strong>位置抖动</strong></p>
+<p>位置抖动是基于方向的时间扭曲带来的最明显的瑕疵之一。当移动头部时，只有额外的旋转部分会反映在ATW生成的图像中，而自帧被渲染以来的所有头部平移都会被忽略。这就意味着当左右移动头部，甚至只是旋转头部使眼睛平移时，将在靠近的物体上观察到多重图像抖动。这种效果在有近场物体时非常明显，例如下面的潜艇截图：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/multiple-image-judder-with-near-field-objects.jpg" alt="multiple-image-judder-with-near-field-objects"></p>
+<blockquote>
+<p>So, how bad is this effect?</p>
+<p>The magnitude of positional judder depends on the environment the player is in and the types of movements they make. If you keep your head relatively still and only look around at the scenery, the positional error will be small and the judder will not be very noticeable.</p>
+<p><strong>Note:</strong> This is normally the case for Gear VR Innovator Edition, which doesn’t include positional tracking. Nevertheless, the head model generates virtual translations, so when a game is running at half-rate on Gear VR, you can still observe positional judder on near-field objects.</p>
+</blockquote>
+<p>那么，这种影响有多严重？</p>
+<p>位置抖动的程度取决于玩家所处的环境和所做的动作类型。如果你的头部保持相对静止，只是环顾四周的景物，那么位置误差会很小，抖动也不会很明显。（说白了就是不做头部平移？）</p>
+<p><strong>注意</strong>：Gear VR 创新版通常就是这种情况，因为它不包含位置跟踪功能。不过，头部模型会产生虚拟平移，因此当游戏在 Gear VR 上以半速率运行时，您仍然可以观察到近场物体的位置抖动。</p>
+<blockquote>
+<p>If you’re looking at objects far away, the displacement change due to your head movement is unlikely to be significant enough to be noticeable. In these cases, ATW allows you to look around a scene with mid-to-far-field geometry without any noticeable judder.</p>
+<p>On the other hand, if you’re in a environment with near-field detail, and you translate your head, the positional judder will be nearly as bad as running without ATW. This will also be true when you look down at a textured ground plane, which is not far enough away to avoid artifacts. The resulting perceptual effect is that of a glitchy, unstable world, which can be disorienting and uncomfortable.</p>
+</blockquote>
+<p>如果你正在看远处的物体，头部移动造成的位移变化不太可能大到足以引起注意。在这种情况下，ATW使你环视带有中远景几何图形的场景而不引起明显的抖动。</p>
+<p>另一方面，如果处于带有近景细节的环境，并且移动了头部，那么位置抖动将与不使用ATW时一样严重。低头看有纹理的地面也是如此。因为距离不够远，无法避免伪影。由此产生的感知效果是一个闪烁、不稳定的时间，会让人迷失方向，感到不舒服。</p>
+<blockquote>
+<p><strong>Positional Timewarp</strong></p>
+<p>One possible way to address positional judder is to implement full positional warping, which applies both translation and orientation fixups to the original rendered frame. Positional warping needs to consider the depth of the original rendered frame, displacing parts of the image by different amounts. However, such displacement generates dis-occlusion artifacts at object edges, where areas of space are uncovered that don’t have data in the original frame.</p>
+<p>Additionally, positional warping is more expensive, can’t easily handle translucency, has trouble with certain anti-aliasing approaches, and doesn’t address the other ATW artifacts discussed below.\</p>
+</blockquote>
+<p><strong>位置扭曲</strong></p>
+<p>解决位置抖动的一种可能的方法为实现全位置扭曲，对原始渲染帧进行方向（朝向）和平移修正。位置扭曲需要考虑原始渲染帧的深度信息，对图像的不同部分进行不同程度的位移。然而，这样产生的中间帧会使物体边缘不闭合，由于没有原始帧中的数据，会导致中间帧某些区域不能被覆盖。</p>
+<p>此外，位置扭曲成本更高，无法轻松处理半透明效果，在使用某些抗锯齿方法时会出现问题，而且无法解决下文中讨论的其他ATW的情形。</p>
+<blockquote>
+<p><strong>Moving and Animated Objects</strong></p>
+<p>Animated or moving objects cause another artifact with ATW: because a new image is generated just by warping the original image without knowledge of the movement of objects, for all ATW-generated frames they are effectively frozen in time. This artifact manifests as multiple images of these moving objects — i.e. judder.</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<center>Image of scene with a moving object affected by judder.</center>
+</blockquote>
+<p><strong>移动和动画物体</strong></p>
+<p>动画或移动中的物体导致了另一个ATW中的瑕疵：由于新图像是在不知道物体移动的情况下通过扭曲原始图像生成的，因此在所有ATW生成的帧中，这些物体实际上都被冻结在时间中。这种伪像表现为这些移动物体的多幅图像，即抖动。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/moving-object-affected-by-judder.jpg" alt="moving-object-affected-by-judder"></p>
+<center>Image of scene with a moving object affected by judder.</center>
+<blockquote>
+<p>The impact of this artifact depends on the number, projected area, and speed of animated objects in the game scene: if the number or size of moving objects is small or they are not moving fast, the multiple images may not be particularly noticeable. However, when moving objects or animation covers a large portion of the screen it can be disturbing.</p>
+<p>Additionally, the frame rate ratio between the game rendering and device refresh rate affects the perceived quality of the motion judder. In our experience, ATW should run at a fixed fraction of the game frame rate. For example, at 90Hz refresh rate, we should either hit 90Hz or fall down to the half-rate of 45Hz with ATW. This will result in image doubling, but the relative positions of the double images on the retina will be stable. Rendering at an intermediate rate, such as 65Hz, will result in a constantly changing number and position of the images on the retina, which is a worse artifact.</p>
+</blockquote>
+<p>这种伪影的影响取决于游戏场景中动画的数量、投影面积和速度：如果正在移动的物体的数量较少或形状较小或移动速度不快，那么重影可能不会太明显。但是，当移动的物体或动画占据了屏幕的大部分区域，就会造成干扰。</p>
+<p>此外，游戏渲染帧率和屏幕刷新率之间的比值也会影响抖动的感知质量。根据经验，ATW应该以游戏帧率的固定比例运行。例如，在90赫兹的刷新率下，ATW要么达到90Hz，要么降到45Hz运行。这将导致图像加倍，但双图像在视网膜上的相对位置将保持稳定。以65Hz这样的中间帧率渲染会导致视网膜上图像的数量和位置不断改变，从而产生更糟糕的伪影。</p>
+<blockquote>
+<p><strong>Specular and Reflection</strong></p>
+<p>Calculations for reflections and specular lighting consider the direction of the eye vector, or rendering camera vector, to produce an image that is custom rendered for each eye.</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+</blockquote>
+<p><strong>镜面反射</strong></p>
+<p>计算镜面反射需考虑眼睛的方向， 或摄像机（Unity里的camera？）的方向， 由此为每只眼睛生成一张定制的渲染画面。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection.jpg" alt="specular-and-reflection"></p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/specular-and-reflection2.jpg" alt="specular-and-reflection2"></p>
+<blockquote>
+<p><em>Diagrams courtesy of Wikipedia and <a href="http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html">http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html</a> respectively.</em></p>
+<p>Since this eye vector changes with head movement, specular and reflection rendering is no longer correct after timewarp. This may result in reflections and specular highlights juddering.</p>
+<p>While specular highlights and reflections are two of the most common cases where shading relies on the eye vector, many other eye vector-dependent shading tricks will have similar issues. For example, parallax mapping and relief mapping (aka. parallax occlusion mapping) will show similar artifacts.</p>
+</blockquote>
+<p>图片来自维基百科和<a href="http://ogldev.atspace.co.uk/www/tutorial19/tutorial19.html">网站</a></p>
+<p>由于眼睛向量（？）会随着头部运动而改变，因此在TW后，镜面反射渲染将不再正确。这可能会导致镜面反射抖动。</p>
+<p>虽然镜面高光和反射是依靠眼球矢量着色的两种最常见情况，许多其他依赖眼球向量的着色技巧也有类似的问题。例如，视差贴图和浮雕映射(又称为视差遮挡映射)也会有类似的现象。</p>
+<blockquote>
+<p><strong>Implementation</strong></p>
+<p>Implementing ATW is challenging for two primary reasons:</p>
+<ul>
+<li>It requires GPU HW to support preemption at reasonable granularity</li>
+<li>It requires OS and driver support to expose GPU preemption</li>
+</ul>
+<p>Let’s start with preemption granularity. At 90Hz, the interval between frames is roughly 11ms. This means that in order for ATW to have any chance of generating a frame, it must be able to preempt the main thread rendering commands and run in under 11ms.</p>
+</blockquote>
+<p><strong>ATW实现</strong></p>
+<p>实现ATW有两个主要的技术挑战：</p>
+<ul>
+<li>需要GPU硬件以合理的粒度支持抢占</li>
+<li>需要操作系统和驱动支持GPU抢占</li>
+</ul>
+<p>让我们从抢占粒度开始。在90Hz时，帧间隔大约是11ms。这意味着为了使ATW能有机会生成一帧，必须能够抢占主线程的渲染命令，并在11ms内运行。</p>
+<blockquote>
+<p>However, 11ms isn’t actually good enough — If ATW runs at randomly scheduled points within the frame, its latency (ie. the amount of time between execution and frame scan-out) will also be random. And, we need to make sure we don’t skip any game-rendered frames.</p>
+<p>What we really want is for ATW to run consistently shortly before the video card flips to a new frame for scan-out, with just enough time to complete the generation of the new timewarped frame. Short of having custom vsync-triggered ATW interrupt routines, we can achieve this with high-priority preemption granularity and scheduling of around 2ms or less.</p>
+</blockquote>
+<p>然而，11ms实际上还不够好：如果ATW在一帧内随机的时间点开始运行，其延迟(执行和帧扫描之间的时间间隔)也将是随机的。而且，我们需要确保不会调过任何游戏渲染的帧。</p>
+<p>我们真正想要的是ATW能够有刚刚足够的时间，在显卡切到新帧扫描输出前结束生成新的一帧。如果不使用定制的垂直同步触发的ATW中断例程，我们可以通过高优先级的抢占性调度，以及大约2毫秒或更短的时间来实现这一点。（它在说啥 <span class="github-emoji"><span>😅</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f605.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span>）</p>
+<blockquote>
+<p>It turns out that 2ms preemption on general rendering is a tall order for modern video cards and driver implementations. Although many GPUs support limited forms of preemption, the implementation varies significantly:</p>
+<ul>
+<li>Some vendors and drivers allow preemption on either batch or draw call granularities. While helpful, this is not perfect (eg. in an extreme case, a single large draw call with a complex shader can easily take 10 ms).</li>
+<li>Other vendors and drivers allow preemption of compute shaders, yet require vendor-specific extensions to support preemption of rendering with compute.</li>
+</ul>
+</blockquote>
+<p>事实证明，对于现代显卡及驱动实现来讲，在一般的渲染中实现2ms抢占是一项艰巨的任务。虽然许多GPU都支持有限形式的抢占，但实现的方式确不尽相同。</p>
+<ul>
+<li>一些供应商和驱动允许在批处理或绘制调用粒度上进行抢占，这虽然有用，但是并不完美(例如，在极端情况下，复杂着色器的单个大型绘制调用可能轻松耗费10ms时间)。</li>
+<li>其他供应商和驱动允许计算着色器的抢占，但是需要特定供应商的拓展来支持计算渲染的抢占。</li>
+</ul>
+<blockquote>
+<p>If the preemption doesn’t occur quickly enough, ATW will not complete warping a new frame before vsync, and the last frame will be shown again, resulting in judder. This means that a correct implementation should be able to preempt and resume rendering arbitrarily, regardless of the pipeline state. In theory, even triangle-granularity preemption is not good enough because with complex shaders we don’t know how long rendering a triangle will take. We’re working with GPU manufacturers to implement better preemption, but it will be awhile before it’s ubiquitous.</p>
+<p>Another part of the equation is rendering preemption support in the OS. Prior to Windows 8, Windows Display Driver Model (WDDM) supported limited preemption using “batch queue” granularity, where batches were built by the graphics driver. Unfortunately, graphics drivers tend to accumulate large batches for rendering efficiency, resulting in preemption that is too coarse to support ATW well.</p>
+<p>With Windows 8, the situation improved as WDDM 1.2 added support for preemption at finer granularities; however, these preemption modes are currently not universally supported by graphics drivers. Rendering pipeline management is expected to improve significantly with Windows 10 and DirectX 12, which gives developers lower-level rendering control. This is good news, but we’re still left without a standard way to support rendering preemption until Windows 10 becomes mainstream. As a result, ATW will require vendor-specific driver extensions for the foreseeable future.</p>
+</blockquote>
+<p>如果抢占动作不够快，ATW将无法在VSync到来前扭曲生成新的帧，最后一帧将再次显示，导致抖动。这就意味着无论流水线的状态如何，正确的实现都应该能够随意的抢占和渲染。理论上，即便是三角粒度抢占（&lt;–没太明白是个啥）也不够好，因为对于复杂着色器，我们不知道渲染一个三角形需要多长时间。我们正与GPU制造商合作，实现更好的抢占功能，但要想普及还需要一段时间。</p>
+<p>另一个因素是操作系统对渲染抢占的支持（equation 方程式）。在Win8之前，Windows显示驱动程序模型(WDDM)支持使用“批队列”粒度的有限抢占，其中批次由图形驱动程序构建。不幸的是，图形驱动往往会积累大量批次以提高渲染效率，这就导致抢占过于粗糙，无法很好地支持ATW。</p>
+<p>在Win8中，情况有所改善，因为WDDM1.2支持了更细粒度的抢占；不过这些抢占模式目前还没有被图形驱动程序普遍支持。渲染管线管理预计将在Win10和DirectX 12上有显著改善，为开发人员提供更低级别的渲染控制。这是一个好消息，但是在Win10成为主流之前我们仍然缺少支持渲染抢占的标准方法。因此，在可见的将来，ATW仍将依赖特定供应商的驱动程序拓展。</p>
+<blockquote>
+<p><strong>ATW is helpful, but it’s not a silver bullet</strong></p>
+<p>Once we have ubiquitous GPU rendering pipeline management and preemption, ATW may become another tool to help developers increase performance and reduce judder in VR. However, due to the issues and challenges we’ve outlined here, ATW is not a silver bullet — VR applications will want to sustain high framerates to deliver the best quality of experience. In the worst cases, ATW’s artifacts can cause users to have an uncomfortable experience. Or stated differently: in the worst cases, ATW can’t prevent an experience from being uncomfortable.</p>
+<p>Given the complexities and artifacts involved, it’s clear that ATW, even with positional timewarp, won’t become a perfect universal solution. This means that both orientation-only and positional ATW are best thought of as pothole insurance, filling in when a frame is occasionally skipped. To deliver comfortable, compelling VR that truly generates presence, developers will still need to target a sustained frame rate of 90Hz+.</p>
+</blockquote>
+<p><strong>ATW有用，但不万能</strong></p>
+<p>一旦我们拥有了无处不在的GPU渲染管线管理和抢占，ATW可能会成为帮助开发者提升VR性能，减少抖动的另一种工具。然而，基于上述的一些问题和挑战，ATW并不是万能的——VR应用期望维持高帧率以提供最好的体验效果。在最坏的情况下，ATW的伪影可能导致用户有不舒服的使用体验。换句话说，在最坏的情况下，ATW无法阻止体验变得不舒服。</p>
+<p>鉴于所涉及的复杂性和人工痕迹，很明显对于ATW，甚至位置扭曲，不会成为一个完美的通用解决方案。这就意味着无论3dof的扭曲还是6dof的扭曲最好作为一个保险，在偶尔跳帧时填补空白。想要提供舒适、真实的VR体验，开发者仍需要将帧率保持在90Hz以上。</p>
+<blockquote>
+<p>Thankfully, Crysis-level graphics are by no means required to deliver incredible VR experiences. It’s perfectly reasonable to reduce the number of lights, the shadow detail, and the shader complexity if it means reaching that 90Hz sweet spot.</p>
+<p>Dual-mode titles that try to support traditional monitors and VR will have the most performance difficulties, as the steep performance requirements for good VR quickly become a challenge to engine scalability. For developers in this situation, ATW may look very attractive despite the artifacts. However, as is typical with new mediums, ports are unlikely to be the best experiences; made-for-VR experiences that target 90Hz are likely to be substantially more successful in generating comfort, presence, and the true magic of VR.</p>
+<p>— Michael Antonov, Chief Software Architect</p>
+</blockquote>
+<p>幸好，要提供惊艳的VR体验，不需要《孤岛危机》级别的图形。只要能够达到90Hz的最佳频率，减少灯光数量、阴影细节或着色器复杂度都是完全合理的。</p>
+<p>试图同时支持传统显示器和VR的双模式游戏会遇到很大的性能问题，因为良好的VR对性能的很快就会成为对引擎可拓展性的挑战。在这种情况下，对开发者来说ATW会有十足的吸引力，尽管看起来会不自然。然而，与新媒体的典型情况一样，移植不可能带来最佳体验；以90Hz为目标的专门的VR体验可能会在产生舒适感、临场感和其他VR的神奇之处收获更多的成功。</p>
+<p>—Michael Antonov, Chief Software Architect</p>
+<hr>
+<p>正文结束😀</p>
+]]></content>
+      <categories>
+        <category>XR</category>
+      </categories>
+      <tags>
+        <tag>XR</tag>
+        <tag>Rendering</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Github Pages + Hexo NexT搭建个人博客</title>
+    <url>/birth-of-my-blog/</url>
+    <content><![CDATA[<p>某日心血来潮，想着要给无所事事的自己找一些事做，耗费了数个安静的夜晚，我的个人博客诞生了 ：)</p>
+<p>在这个过程中，遇到了一些问题，也有过许多思量。因此在博客基本建完之后，回过头来，总结一番，记录下这几天的收获，也可供有幸来此的友友参考。</p>
+<span id="more"></span>
+<h2 id="心理博弈篇">心理博弈篇</h2>
+<p>对于个人博客形式的考虑，我还是比较明确的，坚定地选择了<strong>Github Pages</strong>，排除了CSDN、简书等站点。</p>
+<p>选择Github Pages原因在于：</p>
+<ul>
+<li>想要折腾一番，若是坚持不下来，那坚持写博客就更是空谈了</li>
+<li>免费，新手上路，甚是友好</li>
+<li>有蛮多开源且好看的主题的说</li>
+</ul>
+<p>好吧，好看的主题确实很多，但也让我纠结了很久。最开始选择的静态博客框架是Jekyll，这个也是Github官方支持的框架，符合心意的主题如<a href="https://github.com/Huxpro/huxpro.github.io">HuxPro</a>、<a href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt</a>等。后来又发现了Hexo框架和**<a href="https://github.com/theme-next/hexo-theme-next">NexT</a>主题**，我觉得很可，黑白配色，简约到我心里。</p>
+<p>对于Markdown编辑器，也有过一番纠结。鉴于平时只用过有道云笔记&amp;飞书文档写东西，我又在网上大查一通，力求选一个简单使用方便快捷易上手的编辑器。过程不表，最终摆在面前的有两种方案：</p>
+<ul>
+<li>VSCode + Markdown插件</li>
+<li>Typora</li>
+</ul>
+<p>听说Typora现在是个付费软件，本想投入VSCode的怀抱。又听说Beta版本还是可以免费使用的，于是又打算尝试一下。当然，可能小部分原因是因为之前听朋友夸过叭。</p>
+<p>最终，一番思量下来，博客架构也算是基本确定了：<strong>Github Pages + Hexo NexT + Typora</strong></p>
+<h2 id="一知半解篇">一知半解篇</h2>
+<h3 id="Github-Pages">Github Pages</h3>
+<h4 id="前置条件">前置条件</h4>
+<p>创建Github Pages，只需要两个条件：</p>
+<ul>
+<li>Github账号</li>
+<li>本地安装Git</li>
+</ul>
+<h5 id="Github相关">Github相关</h5>
+<p>已有账号的友友可以默默思考一下自己的用户名，是否中意；没有账号的友友自行注册时记得想一个酷酷的name，因为个人Github Pages默认的域名便是<code>username.github.io</code>，且不支持自定义。So，如果如我一般，不满足现有的用户名，可以自行修改。修改过程文字描述如下：</p>
+<ol>
+<li>Github单击头像</li>
+<li>点击<strong>Settings</strong></li>
+<li>左侧列表单击<strong>Account</strong></li>
+<li>选择<strong>Change username</strong></li>
+<li>之后大概是一些注意事项，详细阅读了解，修改即可</li>
+</ol>
+<p>此外，还推荐友友们检查一下Repository default branch，如果默认是main，那么建议修改为master。此操作涉及到后续主题配置及部署。检查默认分支步骤文字描述如下：</p>
+<ol>
+<li>进入Settings界面</li>
+<li>左侧列表点击Repositories</li>
+<li>映入眼帘的便是了</li>
+</ol>
+<h5 id="Git相关">Git相关</h5>
+<p>后续主题配置和博客编写都会在本地进行，因此需要使用Git进行代码管理。</p>
+<p>此处简述一下我在clone repo时的曲折，以供参考。</p>
+<p>Github比较常用的clone方式有两种：</p>
+<ul>
+<li>https</li>
+<li>ssh</li>
+</ul>
+<p><strong>https</strong>方式在clone时需要验证密码，<strong>ssh</strong>需要提前上传公钥。于是图省事选择了<strong>https</strong>。结果···</p>
+<p>在clone代码时，有时会直接报错，如下</p>
+<blockquote>
+<p>fatal: unable to access ‘<a href="https://github.com/treeknows/treeknows.github.io.git/">https://github.com/treeknows/treeknows.github.io.git/</a>’: OpenSSL SSL_read: Connection was reset, errno 10054</p>
+</blockquote>
+<p>有时会弹出来<strong>github</strong>的认证窗口，验证之后又弹出了<strong>Openssh</strong>相关的窗口，但总是验证失败。</p>
+<p>基于上述的报错，google了蛮多资料，涉及到Git配置修改、github access token等许多内容，但没能真正解决问题。</p>
+<p>由此改用更为熟悉的<strong>ssh</strong>方式，需要在本地先生成公钥，复制并上传。对此处内容陌生的友友可以自行google学习，只需要理解现在在做的是什么，带着目的去查找教程，就不会盲目且迷糊了。</p>
+<blockquote>
+<p>即：需要使用ssh的方式从github clone代码，所以需要提前上传本地的公钥，那么就需要本地有一个公钥。那么如何检查本地是否有公钥呢？如何在本地生成/重新生成公钥呢？有了公钥具体要怎么上传到github呢？</p>
+<p>清楚目的，带着问题，google即可。</p>
+<p>此方法亦适用于本篇其他没有详述过程的步骤，乃至日常工作、学习。</p>
+</blockquote>
+<h4 id="Pages创建">Pages创建</h4>
+<p>Github Pages的创建过程是比较简单的，过程文字描述如下：</p>
+<ol>
+<li>进入个人主页界面</li>
+<li>点击头像左边的➕</li>
+<li>点击new repository</li>
+<li>进入创建界面<strong>Create a new repository</strong>
+<ol>
+<li>Repository name必须填写<code>username.github.io</code>，如<code>zhangsan.github.io</code></li>
+<li>Description描述，可写可不写</li>
+<li>公开与否建议设为<strong>Public</strong>，涉及到后续评论系统</li>
+<li>README file &amp; .gitignore file &amp; license，自由选择</li>
+</ol>
+</li>
+<li>配置OK后点击<strong>Create repository</strong>按钮</li>
+<li>此时应该就到仓库的主页了</li>
+<li>点击<strong>仓库主页的Settings</strong>，区别于之前的Settings</li>
+<li>点击左边列表中的<strong>Pages</strong></li>
+<li>界面中Source选择<strong>Depoly from a branch</strong></li>
+<li>Branch分别选择<strong>master</strong> &amp; <strong>/(root)</strong>，没有修改默认分支为master的应该选择main</li>
+<li>此时博客网站应该已经可以访问了，在浏览器地址栏输入<code>username.github.io</code></li>
+</ol>
+<p>此时的网站还属于比较简陋的状态，下一步，<strong>搞个主题</strong>。</p>
+<blockquote>
+<p>如果如果此时网站打不开，可能是需要等待一下。在仓库主页的右下，有一个<strong>Environment</strong>，可以查看当前github-pages state</p>
+<p>如果如果还是不行，可能是需要一个README文件，或一个简单的index.html。请勇敢解决它。</p>
+</blockquote>
+<h3 id="Hexo-NexT">Hexo NexT</h3>
+<p>本站使用的是基于Hexo框架的NexT主题，黑白色调，主打一个简约。主题包含四种布局（暂且称为布局），简单理解就是上下结构和左右结构，可以根据个人喜好选择。</p>
+<h4 id="前置条件-2">前置条件</h4>
+<p><strong>Hexo</strong>是基于<strong>NodeJS</strong>编写的，所以需要安装<strong>NodeJS</strong>和<strong>npm</strong>工具。</p>
+<h5 id="NodeJS安装">NodeJS安装</h5>
+<p>首先需要在官网下载安装包，<a href="http://nodejs.cn/download/">NodeJS官网</a>，安装包下载完成之后运行。除了安装路径建议手动修改一下，其他保持默认一路Next即可。</p>
+<blockquote>
+<p>macOS or Linux安装方式请自行google</p>
+</blockquote>
+<p>安装完成之后，打开<strong>git bash</strong>，输入以下命令检查安装是否成功</p>
+<figure class="highlight crmsh"><table><tbody><tr><td class="code"><pre><span class="line">$ <span class="keyword">node</span> <span class="title">-v</span></span><br><span class="line">v18.<span class="number">15.0</span></span><br><span class="line"></span><br><span class="line">$ npm -v</span><br><span class="line"><span class="number">9.5</span>.<span class="number">0</span></span><br></pre></td></tr></tbody></table></figure>
+<p>一般情况下是不会有问题的，我安装的很顺利，所以没有相关的报错可以提供解决思路。</p>
+<h5 id="Hexo安装">Hexo安装</h5>
+<p>安装Hexo只需执行下述命令，亦可以在<a href="https://hexo.io/zh-cn/">Hexo官网</a>查看安装及使用方法。</p>
+<figure class="highlight crystal"><table><tbody><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>npm install -g hexo-cli</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看hexo版本</span></span><br><span class="line"><span class="variable">$ </span>hexo -v</span><br></pre></td></tr></tbody></table></figure>
+<p>我当时在安装hexo结束之后，查看版本会报错，找不到hexo命令。</p>
+<p>似乎看起来是安装没有成功，但是<strong>npm install</strong>却也没有打印出任何error信息，最终的解决办法为：</p>
+<figure class="highlight avrasm"><table><tbody><tr><td class="code"><pre><span class="line">$ npx hexo -v</span><br><span class="line">hexo-<span class="keyword">cli</span>: <span class="number">4.3</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">os:</span> win32 <span class="number">10.0</span><span class="number">.19044</span></span><br><span class="line"><span class="symbol">node:</span> <span class="number">18.15</span><span class="number">.0</span></span><br><span class="line"><span class="symbol">v8:</span> <span class="number">10.2</span><span class="number">.154</span><span class="number">.26</span>-node<span class="number">.25</span></span><br><span class="line">···</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>是的，执行<code>npx hexo</code>而不是<code>hexo</code></p>
+<blockquote>
+<p>2023.09.28更新：</p>
+<p>Windows下想要直接执行<code>hexo</code>需要手动添加环境变量。</p>
+<p>相对路径为：BLOG_DIR\hexo\node_modules.bin</p>
+</blockquote>
+<h4 id="主题安装">主题安装</h4>
+<p>万事俱备，只欠安装。</p>
+<p>但是在安装之前，要唠叨两句。考虑到博客的框架、主题、配置是在本地环境下的，如果涉及到更换电脑，便需要推倒重来，于是便新建了<strong>hexo</strong>分支来管理博客的主题和配置文件，博客站点的真正内容会部署到<strong>master</strong>分支。这样如果换了电脑，便只需要安装<strong>NodeJS</strong>和<strong>Hexo</strong>，就能直接得到原本的博客环境啦。</p>
+<h5 id="Hexo初始化">Hexo初始化</h5>
+<p>首先是要先把新建的仓库clone到本地，新建博客源码分支<strong>hexo</strong>，初始化hexo，具体命令如下：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"></span><br><span class="line">$ git clone xxxxxx <span class="regexp">//</span> xxxxx是github上复制的clone地址</span><br><span class="line"></span><br><span class="line">$ cd xxxxxx <span class="regexp">//</span> clone到本地会生成一个跟仓库同名的目录</span><br><span class="line"></span><br><span class="line">$ git checkout -b hexo <span class="regexp">//</span> 创建并切换到hexo分支</span><br><span class="line"></span><br><span class="line">$ hexo init hexo <span class="regexp">//</span> 初始化hexo，第一个hexo是cmd，第二个hexo是新建hexo目录</span><br><span class="line"></span><br><span class="line">$ cd hexo <span class="regexp">//</span> 进入新建的hexo目录</span><br><span class="line"></span><br><span class="line">$ npm install <span class="regexp">//</span> 安装相关依赖</span><br><span class="line"></span><br><span class="line">$ hexo g <span class="regexp">//</span> generate，生成静态网站</span><br><span class="line"></span><br><span class="line">$ hexo s <span class="regexp">//</span> server，本地预览</span><br></pre></td></tr></tbody></table></figure>
+<p>到这里就可以打开浏览器输入<strong>localhost:4000</strong>，进行本地预览了。</p>
+<blockquote>
+<p>上述步骤中，如有需要<strong>hexo</strong>请灵活替换为<strong>npx hexo</strong>，以及过程来自于回忆，如果哪一步的输出有报错，请google解决一下，也欢迎<strong>留言咨询</strong>。</p>
+</blockquote>
+<p>此时本地预览的界面是Hexo默认的主题，接下来介绍安装NexT主题。</p>
+<h5 id="NexT主题安装">NexT主题安装</h5>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">$ cd hexo <span class="regexp">//</span>确保当前目录处于hexo目录下</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> clone NexT主题，如果使用https clone报错，可以自行替换为ssh的链接</span><br><span class="line">$ git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/theme-next/</span>hexo-theme-<span class="keyword">next</span> themes/<span class="keyword">next</span> </span><br></pre></td></tr></tbody></table></figure>
+<p>此时NexT主题就已经安装到本地了，其配置保存在<strong>themes/next</strong>目录下。若想要启用NexT主题，还需要修改Hexo的配置文件<code>_config.yml</code>，注意此文件应位于<strong>hexo</strong>目录下，称为<strong>站点配置文件</strong>。在<strong>themes/next</strong>路径下也有一个<code>_config.yml</code>，称之为<strong>主题配置文件</strong>。</p>
+<p>在<strong>站点配置文件</strong>中搜索<strong>theme</strong>，修改为如下值：</p>
+<figure class="highlight clean"><table><tbody><tr><td class="code"><pre><span class="line"># Extensions</span><br><span class="line">## Plugins: https:<span class="comment">//hexo.io/plugins/</span></span><br><span class="line">## Themes: https:<span class="comment">//hexo.io/themes/</span></span><br><span class="line"># 启用主题</span><br><span class="line">theme: next</span><br></pre></td></tr></tbody></table></figure>
+<p>执行如下命令本地验证主题是否生效：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo clean <span class="regexp">//</span> 清理之前生成的资源</span><br><span class="line">$ hexo g <span class="regexp">//</span> 重新生成</span><br><span class="line">$ hexo s <span class="regexp">//</span> 启动本地服务</span><br></pre></td></tr></tbody></table></figure>
+<p>打开浏览器输入<strong>localhost:4000</strong>，进行本地预览。</p>
+<h5 id="部署到Github-Pages">部署到Github Pages</h5>
+<p>本地预览无误，便可部署到Github Pages了。</p>
+<p>首先需要安装插件<strong>hexo-deployer-git</strong></p>
+<figure class="highlight ada"><table><tbody><tr><td class="code"><pre><span class="line">$ npm install hexo-deployer-git <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
+<p>修改<strong>站点配置文件</strong>，搜索<strong>deploy</strong></p>
+<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta"># Deployment</span></span><br><span class="line"><span class="meta">## Docs: https:<span class="comment">//hexo.io/docs/one-command-deployment</span></span></span><br><span class="line"><span class="symbol">deploy:</span></span><br><span class="line"><span class="symbol">  type:</span> git</span><br><span class="line"><span class="symbol">  repo:</span></span><br><span class="line">      <span class="meta"># 需要替换为自己仓库的链接，根据https或ssh方式不同自由选择，我已经上传了公钥，所以选择ssh</span></span><br><span class="line"><span class="symbol">    github:</span> git@github.com:treeknows/treeknows.github.io.git</span><br><span class="line">  <span class="meta"># 此处似乎只能选择master，配置为main时，实际还是会部署到master分支</span></span><br><span class="line"><span class="symbol">  branch:</span> master</span><br></pre></td></tr></tbody></table></figure>
+<p>可以将配置修改为如上，记得<strong>替换自己的仓库链接</strong>。此外配置branch时，设置为<strong>main</strong>实测是无效的，依旧会push到master分支，如果没有master分支，则会自己创建。这也是为什么在前面推荐<strong>修改默认创建分支为master</strong>，来自强迫症患者的倔强。</p>
+<p>修改配置后，需要手动部署到Github</p>
+<figure class="highlight crystal"><table><tbody><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>hexo g -d</span><br></pre></td></tr></tbody></table></figure>
+<p>部署成功后，稍待片刻，便可访问自己的博客查看效果了。</p>
+<h5 id="备份Hexo">备份Hexo</h5>
+<p>此时博客已然部署完毕，但是相关的配置还只存在于本地，需要push到Github。</p>
+<figure class="highlight gams"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">$</span> git branch <span class="comment">// 请确保在hexo分支</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git add . <span class="comment">// 添加文件</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git commit <span class="comment">// 提交</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">$</span> git push --<span class="keyword">set</span>-upstream <span class="comment">origin hexo</span> // 推送到远端</span><br></pre></td></tr></tbody></table></figure>
+<p>推送到Github之后，还需要在Github上将<strong>hexo</strong>设为默认分支，设置过程文字描述如下：</p>
+<ol>
+<li>打开博客仓库主页</li>
+<li>点击仓库主页的Settings</li>
+<li>在<strong>General</strong>页面，设置Default branch为<strong>hexo</strong></li>
+</ol>
+<p>此时博客配置就已经备份成功了，如果切换了电脑，只需要：</p>
+<ol>
+<li>
+<p>clone 仓库 (默认分支为hexo)</p>
+<figure class="highlight crmsh"><table><tbody><tr><td class="code"><pre><span class="line">$ git <span class="keyword">clone</span> <span class="title">git</span>@github.com:*.github.io.git</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>在本地 *.github.io 文件夹下通过 Git bash 依次执行下列指令：</p>
+<figure class="highlight cmake"><table><tbody><tr><td class="code"><pre><span class="line">$ npm <span class="keyword">install</span> hexo</span><br><span class="line">$ npm <span class="keyword">install</span> </span><br><span class="line">$ npm <span class="keyword">install</span> hexo-deployer-git</span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ol>
+<blockquote>
+<p>切记，不需要 hexo init 这条指令</p>
+</blockquote>
+<p>此时便可以在新电脑上愉快的writing了。</p>
+<blockquote>
+<p>实测过程中遇到一个问题：在B电脑上clone下来博客的配置后，修改了一些配置，执行<code>npm install</code>安装了一个插件，并将这些修改的部分提交到了Github。在A电脑同步最新配置后，本地<code>hexo g</code>会报错，怀疑可能的原因有：</p>
+<ul>
+<li>我添加了ignore文件，可能导致B电脑安装的插件被忽略，没有push到服务器，导致A电脑配置了插件，却没有真正下载插件</li>
+<li>也可能是需要先执行<code>hexo clean</code>，再重新生成</li>
+</ul>
+<p>最终的解决是上述两点都做了，在A电脑手动安装了插件，clean之后再生成预览。</p>
+</blockquote>
+<h3 id="Typora">Typora</h3>
+<p>Markdown编辑器使用的是Typora 0.11.18 beta版本，下载地址<a href="https://ghpym.lanzoui.com/b00zng7gd">点击此处</a>，下载之后安装，运行。此时运行会有弹框提示升级，不升级便只能退出应用，无法使用。</p>
+<p>此时需要退出应用，按照以下步骤修改注册表即可正常使用。</p>
+<ol>
+<li>按<code>Win+R</code>打开运行窗口，输入<code>regedit</code>，点确定，打开注册表，依次展开<code>计算机\HKEY_CURRENT_USER\Software\Typora</code>，然后在<code>Typora</code>上右键，点<code>权限</code>，选中<code>Administrtors</code>，把权限全部设置为<code>拒绝</code>。</li>
+<li>打开Typora，此时应该可以正常打开应用了。还需要在偏好设置里把自动更新关掉。</li>
+</ol>
+<p>做完上面两步，Typora beta版本应该就能正常使用了。看网上的说法，最新版本也有破解的办法，只是我个人觉得没必要。</p>
+<p>另外提一下正版的Typora购买也就不到100米，可以在三台设备上使用，可以一直使用，不排除大版本升级后需要重新购买的可能。所以比较推荐的做法是，先感受一下Typora，如果使用感受不错以及新版本有心动的功能的话，可以考虑支持一下正版。</p>
+<p>初体验，确实不错，插入图片相关的功能还在探索ing，再写几篇博客就能背下来Markdown的语法了。</p>
+<h3 id="个性化主题">个性化主题</h3>
+<p>到此，博客的现状应该是NexT主题，但是还没有修改任何配置，因此接下来就要对配置进行一些修改，大致会分为：</p>
+<ul>
+<li>基础配置</li>
+<li>个性配置</li>
+</ul>
+<p>基础配置诸如网站标题、描述一类的配置，篇幅不会太长；个性配置便有很多说头了，我会另写一篇博客专门介绍，不会太久。</p>
+<p>基础配置位于站点配置文件的开头，大致有以下几种：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Site</span></span><br><span class="line">title: <span class="regexp">//</span> 网站标题</span><br><span class="line">subtitle: <span class="regexp">//</span> 子标题，在主页显示，看起来的效果更像一个签名</span><br><span class="line">description: <span class="regexp">//</span> 在侧边栏显示，效果也像是签名</span><br><span class="line">keywords: <span class="regexp">//</span> 网站关键字</span><br><span class="line">author: <span class="regexp">//</span> 作者，会显示在侧边栏以及网站底部</span><br><span class="line">language: zh-CN <span class="regexp">//</span> 语言</span><br><span class="line">timezone: <span class="string">'Asia/Shanghai'</span> <span class="regexp">//</span> 时区</span><br><span class="line"></span><br><span class="line">url: <span class="regexp">//</span> 填写博客站点的地址即可</span><br></pre></td></tr></tbody></table></figure>
+<p>基础配置大致如此，更多的配置含义及细节，随后更新。</p>
+<h2 id="豁然开朗篇">豁然开朗篇</h2>
+<p>这篇博客陆陆续续用了三个工作日的安静夜晚才完成，导致写到此处时竟忘记了豁然开朗在哪里，忘记了原本想表述在此的内容，可见</p>
+<ul>
+<li>写博客并非一件容易之事，还是需要花费一定的时间和精力</li>
+<li>写出完整内容之前可以先列个大纲或者写个备忘，把想说的先简单记录</li>
+</ul>
+<p>也如上所说，本文是在本站配置好之后才开始写，且并非连续写完，难免存在疏漏，以及逻辑、语句不通之处，欢迎指正。</p>
+<p>也因为图床目前还在研究，所以有意的选择了无图模式，表述不够清晰之处，欢迎留言交流。</p>
+<p>最后，希望这一段时间的努力不会浪费，我能够坚持把博客写下去，给自己一个沉淀、成长的机会。</p>
+<p>：）</p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>Github Pages</tag>
+        <tag>Hexo</tag>
+        <tag>NexT主题</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>基于Github Pages + NexT主题的个性化配置</title>
+    <url>/personalize-my-site/</url>
+    <content><![CDATA[<blockquote>
+<p>本文详细介绍了Github Pages + Hexo框架 + NexT主题的个性化配置，涉及到网站基本信息、评论系统、Google/Bing收录等内容。</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<p>书接上文，站点部署完成之后，剩下的重中之重便是网站的配置了。诸如网站基本信息之类的配置，在第一篇博客已经简单介绍，这些配置往往在部署完成之后就会修改，不然无法体现出作者本人的资料，也就谈不上部署完成。剩下的便是很多个性化的配置，这里才是本人以及多数人重点关注的内容，所以单开一篇，记录自己DIY的过程以及一点点心得。</p>
+<span id="more"></span>
+<blockquote>
+<p>既面向大众，尽微薄之力；也记录下来，和记忆妥协。（时间久了真的会忘···）</p>
+</blockquote>
+<p>首先重新明确一个前提，使用的是Hexo框架+NexT主题，在本地站点相关的目录下会有两个配置文件<code>_config.yml</code>，其中一个位于init hexo框架的目录下，称之为<strong>站点配置文件</strong>；另一个位于框架目录下的*themes/next/*目录下，称之为<strong>主题配置文件</strong>。相比之下，<strong>站点配置文件</strong>在外层目录，主题配置文件在内层目录，希望这个描述可以清晰你对配置文件的不同之处，避免混淆。</p>
+<h2 id="配置博客">配置博客</h2>
+<h3 id="总体原则">总体原则</h3>
+<p>配置博客的一个<strong>总体原则就是了解配置文件中各项配置的具体含义，基于自己的理解修改成想要的配置，并善用hexo的本地服务进行调试，灵活修改</strong>。总的来说，是一件耗时且枯燥的工作，所以直接搜索相关的配置博客是一个很好的选择。</p>
+<p>当然，如我这般，搜到的博客都是若干年前发表的，NexT版本的不一致导致很多配置都不能直接适用，所以我只好尽可能的了解各项配置的含义，慢慢完善成自己想要的效果。</p>
+<blockquote>
+<p>如果你如我一般，请参考上面的思路，慢慢配置。</p>
+</blockquote>
+<h3 id="具体配置">具体配置</h3>
+<ul>
+<li>
+<p>取消网站底部的强力驱动字样</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索powered，设为false即可</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Powered by Hexo &amp; NexT</span></span><br><span class="line"><span class="comment">## 是否显示网站底部的强力驱动字样</span></span><br><span class="line"><span class="attr">powered:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>增加本地搜索功能</p>
+<ul>
+<li>安装插件，执行 <code>npm install hexo-generator-searchdb --save</code></li>
+<li>修改<strong>站点配置文件</strong>，在其最下方新增如下配置</li>
+</ul>
+<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">search:</span></span><br><span class="line"><span class="symbol">    path:</span> search.xml</span><br><span class="line"><span class="symbol">    field:</span> post</span><br><span class="line"><span class="symbol">    format:</span> html</span><br><span class="line"><span class="symbol">    limit:</span> <span class="number">10000</span></span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li>
+<p>修改<strong>主题配置文件</strong>，启用搜索功能</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Local Search</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/theme-next/hexo-generator-searchdb</span></span><br><span class="line"><span class="attr">local_search:</span></span><br><span class="line">  <span class="comment">## 启用</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 设为auto，输入关键词之后自动显示列表</span></span><br><span class="line">  <span class="comment"># If auto, trigger search by changing input.</span></span><br><span class="line">  <span class="comment">## 设为manual，输入关键词之后回车显示列表</span></span><br><span class="line">  <span class="comment"># If manual, trigger search by pressing enter key or search button.</span></span><br><span class="line">  <span class="attr">trigger:</span> <span class="string">auto</span></span><br><span class="line">  <span class="comment"># Show top n results per article, show all results by setting to -1</span></span><br><span class="line">  <span class="attr">top_n_per_article:</span> <span class="number">-1</span></span><br><span class="line">  <span class="comment"># Unescape html strings to the readable one.</span></span><br><span class="line">  <span class="attr">unescape:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Preload the search data when the page loads.</span></span><br><span class="line">  <span class="comment">## 预加载，打开可能会影响加载速度</span></span><br><span class="line">  <span class="attr">preload:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
+<blockquote>
+<p>题外话：似乎在博客数量上去之后，本地搜索的性能会受到影响，NexT提供了一个三方的搜索服务<code>Algolia Search</code>，但是初期似乎没必要安排上。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>设置侧边栏头像</p>
+<ul>
+<li>
+<p>编辑<strong>主题配置文件</strong>，搜索字段<code>avatar</code></p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">## 设置侧边栏头像</span></span><br><span class="line"><span class="attr">avatar:</span></span><br><span class="line">  <span class="comment"># Replace the default image and set the url here.</span></span><br><span class="line">  <span class="comment">## 选择自己喜欢的图片，保存在相对路径hexo/themes/next/source/images下即可</span></span><br><span class="line">  <span class="attr">url:</span> <span class="string">/images/avatar.gif</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be dispalyed in circle.</span></span><br><span class="line">  <span class="comment">## 设为true，头像会变成圆形，默认是方框</span></span><br><span class="line">  <span class="attr">rounded:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment"># If true, the avatar will be rotated with the cursor.</span></span><br><span class="line">  <span class="comment">## 设为true，鼠标触碰到时头像框会旋转</span></span><br><span class="line">  <span class="attr">rotated:</span> <span class="literal">false</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>设置网站图标（浏览器标签页显示的小图标）</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>favicon</code>字段</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">favicon:</span><br><span class="line">  <span class="comment">## 主要是这两个，不同尺寸</span></span><br><span class="line">  small: <span class="regexp">/images/</span>favicon-<span class="number">16</span>x16-<span class="keyword">next</span>.png</span><br><span class="line">  medium: <span class="regexp">/images/</span>favicon-<span class="number">32</span>x32-<span class="keyword">next</span>.png</span><br><span class="line">  <span class="comment">## 这两个也做了替换，但没有验证效果</span></span><br><span class="line">  apple_touch_icon: <span class="regexp">/images/</span>apple-touch-icon-<span class="keyword">next</span>.png</span><br><span class="line">  safari_pinned_tab: <span class="regexp">/images/</span>logo.svg</span><br><span class="line">  <span class="comment">#android_manifest: /images/manifest.json</span></span><br><span class="line">  <span class="comment">#ms_browserconfig: /images/browserconfig.xml</span></span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到有不同类型的图标，可以从网站下载或制作自己喜欢的图标，替换对应的源文件即可。（推荐一个图标素材站点：<a href="https://www.iconfont.cn/">iconfont</a>）</p>
+</li>
+</ul>
+</li>
+<li>
+<p>修改文章底部的标签样式，#改为图标</p>
+<ul>
+<li>在<strong>主题配置文件</strong>中搜索<code>tag_icon</code>，将其置为true即可</li>
+</ul>
+</li>
+<li>
+<p>设置建站时间</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>since</code>，取消注释修改其值即可</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">footer:</span></span><br><span class="line">  <span class="comment"># Specify the date when the site was setup. If not defined, current year will be used.</span></span><br><span class="line">  <span class="attr">since:</span> <span class="number">2023</span></span><br><span class="line">  <span class="string">···</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>首页截断设置</p>
+<ul>
+<li>
+<p>首推的方法是在文章合适的位置手动添加<code>&lt;!-- more --&gt;</code>，这样就可以生成截断效果了</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索excerpt_description，实际效果未经过测试</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Automatically excerpt description in homepage as preamble text.</span></span><br><span class="line"><span class="comment">## 首页截断设置，本地实测如果文章中添加了&lt;!-- more --&gt;，这个设为false也不会影响截断效果</span></span><br><span class="line"><span class="attr">excerpt_description:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Read more button</span></span><br><span class="line"><span class="comment"># If true, the read more button will be displayed in excerpt section.</span></span><br><span class="line"><span class="attr">read_more_btn:</span> <span class="literal">true</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>增加代码复制按钮</p>
+<ul>
+<li>
+<p><strong>主题配置文件</strong>中搜索copy_button，设置为true即可</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">codeblock:</span></span><br><span class="line">  <span class="comment"># Code Highlight theme</span></span><br><span class="line">  <span class="comment"># Available values: normal | night | night eighties | night blue | night bright | solarized | solarized dark | galactic</span></span><br><span class="line">  <span class="comment"># See: https://github.com/chriskempson/tomorrow-theme</span></span><br><span class="line">  <span class="comment">## 选择代码风格</span></span><br><span class="line">  <span class="attr">highlight_theme:</span> <span class="string">normal</span></span><br><span class="line">  <span class="comment"># Add copy button on codeblock</span></span><br><span class="line">  <span class="attr">copy_button:</span></span><br><span class="line">    <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Show text copy result.</span></span><br><span class="line">    <span class="comment">## 显示复制结果</span></span><br><span class="line">    <span class="attr">show_result:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># Available values: default | flat | mac</span></span><br><span class="line">    <span class="comment">## 风格，mac风格好像挺奇怪的</span></span><br><span class="line">    <span class="attr">style:</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>这里顺便也贴一下代码风格的设置方法。如上中注释<em>highlight_theme</em></p>
+</li>
+</ul>
+</li>
+<li>
+<p>增加网站访客人数和阅读量</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索busuanzi_count，将其启用</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Show Views / Visitors of the website / page with busuanzi.</span></span><br><span class="line"><span class="comment"># Get more information on http://ibruce.info/2015/04/04/busuanzi</span></span><br><span class="line"><span class="attr">busuanzi_count:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment">## 总访客以及图标</span></span><br><span class="line">  <span class="attr">total_visitors:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_visitors_icon:</span> <span class="string">fa</span> <span class="string">fa-user</span></span><br><span class="line">  <span class="comment">## 总访问次数及图标</span></span><br><span class="line">  <span class="attr">total_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">total_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br><span class="line">  <span class="comment">## 文章阅读量及图标</span></span><br><span class="line">  <span class="attr">post_views:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">post_views_icon:</span> <span class="string">fa</span> <span class="string">fa-eye</span></span><br></pre></td></tr></tbody></table></figure>
+<p>另外，本地验证时发现数字很抽象，部署之后查看会正常。</p>
+<blockquote>
+<p>另外，目前busuanzi还无法重置访客和访问次数</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>永久链接格式</p>
+<ul>
+<li>
+<p>在<strong>站点配置文件</strong>中搜索permalink</p>
+<figure class="highlight elixir"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">permalink:</span> <span class="symbol">:title/</span></span><br><span class="line"><span class="symbol">permalink_defaults:</span> <span class="symbol">:year/</span><span class="symbol">:month/</span><span class="symbol">:day/</span><span class="symbol">:title/</span></span><br></pre></td></tr></tbody></table></figure>
+<p>默认文章的链接是年+月+日+标题的，可以修改成只有标题，似乎这样可以优化<a href="https://www.google.com.hk/search?q=seo%E6%98%AF%E4%BB%80%E4%B9%88&amp;oq=seo&amp;aqs=chrome.1.69i57j0i512j46i340i512l2j69i60l2j69i65j69i61.2595j0j7&amp;sourceid=chrome&amp;ie=UTF-8">SEO</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p>设置页面加载时顶部进度条</p>
+<ul>
+<li>
+<p>在主题配置文件中搜索pace，enable设为true，在theme处选择具体的风格</p>
+<figure class="highlight coq"><table><tbody><tr><td class="code"><pre><span class="line">pace:</span><br><span class="line">  enable: true</span><br><span class="line">  # Themes list:</span><br><span class="line">  # big-counter | <span class="type">bounce</span> | <span class="type">barber</span>-shop | <span class="type">center</span>-atom | <span class="type">center</span>-circle | <span class="type">center</span>-radar | <span class="type">center</span>-<span class="built_in">simple</span></span><br><span class="line">  # corner-indicator | <span class="type">fill</span>-<span class="built_in">left</span> | <span class="type">flat</span>-<span class="built_in">top</span> | <span class="type">flash</span> | <span class="type">loading</span>-bar | <span class="type">mac</span>-osx | <span class="type">material</span> | <span class="type">minimal</span></span><br><span class="line">  theme: minimal</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>下载插件，参考<a href="https://github.com/theme-next/theme-next-pace">pace官方</a>执行以下命令：</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> themes/next</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">_config.yml  crowdin.yml  docs  gulpfile.js  languages  layout  LICENSE.md  package.json  README.md  scripts  source</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/theme-next/theme-next-pace <span class="built_in">source</span>/lib/pace</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Google收录博客网站</strong></p>
+<blockquote>
+<p>一个比较关键的配置。由于依旧是无图模式，所以只能尽可能的用文字描述清楚。且由于时间过的比较久，也无法完全重新跑一次流程，所以有些地方还是有点模糊的。如有问题，<strong>欢迎留言</strong>。</p>
+<p>另外做完这些操作之后，google收录还是会需要两三天的时间，所以再心急也只能安稳等着。</p>
+</blockquote>
+<ul>
+<li>
+<p>查看是否已被收录，在地址栏输入：<code>site:http://xxxx.github.io</code>，如果能显示出自己站点的网页，说明已收录，反之则需要手动提交。</p>
+<blockquote>
+<p>一般新站是不会被收录的，如果不主动提交，理论上有足够多的高质量外链，是有可能被Google主动收录的。</p>
+</blockquote>
+</li>
+<li>
+<p>进入Google Web Master <a href="https://www.google.com/webmasters/tools/home?hl=zh-CN">Search Console</a> 并登录，一般都是谷歌账号直接登录的</p>
+</li>
+<li>
+<p>登陆之后找到添加资源的地方，资源类型选择第二种：<strong>网址前缀</strong></p>
+</li>
+<li>
+<p>输入自己的地址之后点击继续，会弹出一个验证所有权的窗口。<strong>切记不要关闭网页</strong>。</p>
+</li>
+<li>
+<p>验证方法有很多种，这里推荐选择第二种：<strong>HTML标记</strong></p>
+</li>
+<li>
+<p>此方法会给出一串HTML代码，例如：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line">&lt;meta name=<span class="string">"google-site-verification"</span> content=<span class="string">"rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg"</span> /&gt;</span><br><span class="line"><span class="regexp">//</span> NOTE: 这是我随机输入的网址生成的标记，请务必使用自己站点生成的代码</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>此时有两种方法：</p>
+<ul>
+<li>
+<p>如果是NexT主题，在<strong>主题配置文件</strong>中搜索<code>google_site_verification</code>，并将HTML代码content的内容填上去。</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="regexp">//</span> 举例！</span><br><span class="line"><span class="comment"># Google Webmaster tools verification.</span></span><br><span class="line"><span class="comment"># See: https://www.google.com/webmasters</span></span><br><span class="line">google_site_verification:rMF1JqbmMsHu2M1zSLQ482HWMOd8u-<span class="number">4</span>z-zWViLWMXHg</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>其他情况，可以手动将改代码添加至swig文件中，打开<em>themes/next/layout/_partials/head/head.swig</em> 文件，在其中添加生成的代码。我添加在了第二行，如下所示：</p>
+<figure class="highlight routeros"><table><tbody><tr><td class="code"><pre><span class="line">&lt;meta <span class="attribute">charset</span>=<span class="string">"UTF-8"</span>&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">"google-site-verification"</span> <span class="attribute">content</span>=<span class="string">"rMF1JqbmMsHu2M1zSLQ482HWMOd8u-4z-zWViLWMXHg"</span> /&gt;</span><br><span class="line">&lt;meta <span class="attribute">name</span>=<span class="string">"viewport"</span> <span class="attribute">content</span>=<span class="string">"width=device-width, initial-scale=1, maximum-scale=2"</span>&gt;</span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>添加完成之后，需要执行<code>hexo clean &amp;&amp; hexo g -d</code>部署</p>
+</li>
+<li>
+<p>部署完成之后打开博客网站，鼠标右键查看网页源代码，此时在源代码中应该可以搜到我们添加的代码的。</p>
+<blockquote>
+<p>如果没搜到，可以考虑稍作等待，多刷新几次页面，重新查看源代码；或检查上述步骤</p>
+</blockquote>
+</li>
+<li>
+<p>成功搜到之后，回到验证所有权的网页，点击验证。</p>
+</li>
+<li>
+<p>验证成功之后应该就会跳转到控制台的主页啦</p>
+</li>
+</ul>
+</li>
+<li>
+<p>添加站点地图</p>
+<p>添加完谷歌收录之后，紧接着就要上传网站的站点地图。</p>
+<ul>
+<li>
+<p>首先是需要安装插件，在终端执行cmd</p>
+<figure class="highlight ada"><table><tbody><tr><td class="code"><pre><span class="line">npm install hexo-generator-sitemap <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>在<strong>站点配置文件</strong>中，添加如下配置。我是在文件末尾添加的。</p>
+<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta"># 站点地图</span></span><br><span class="line"><span class="symbol">sitemap:</span></span><br><span class="line"><span class="symbol">    path:</span> sitemap.xml</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>执行<code>hexo clean &amp;&amp; hexo g</code>重新生成后就可以在<code>public</code>目录下看到<code>sitemap.xml</code>文件了。</p>
+</li>
+<li>
+<p>回到<code>Google Search Console</code>，在左侧的菜单中选择站点地图，输入我们生成的站点地图<code>sitemap.xml</code>即可</p>
+<blockquote>
+<p>默认是已经有博客的地址了的，也就是已经显示了**<a href="https://treeknows.github.io/**%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AA%E9%9C%80%E8%A6%81%E5%9C%A8%E8%BE%93%E5%85%A5%E6%A1%86%E4%B8%AD%E8%BE%93%E5%85%A5%60sitemap.xml%60%E5%B9%B6%E7%82%B9%E5%87%BB%E6%8F%90%E4%BA%A4%E5%8D%B3%E5%8F%AF%E3%80%82">https://treeknows.github.io/**，我们只需要在输入框中输入`sitemap.xml`并点击提交即可。</a></p>
+<p>NOTE：刚添加完站点地图，下面的状态显示的可能不是<strong>成功</strong>，同样需要等待数天，才会更新状态。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>谷歌分析</p>
+<blockquote>
+<p>Google Analytics（GA）挺高级的，需要一定的学习成本。如果对站点SEO感兴趣，可以多多学习以下</p>
+</blockquote>
+<ul>
+<li>
+<p>首先要创建账号，前往<a href="https://analytics.google.com/">Google 分析</a>创建账号及媒体资源。</p>
+</li>
+<li>
+<p>没记错的话，用谷歌账号是可以直接登陆的</p>
+</li>
+<li>
+<p>登陆之后创建账号，账号名称没有特别的要求</p>
+</li>
+<li>
+<p>所有都创建完成之后会生成一个<code>衡量 ID</code>，格式如<code>G-8W35JPL36V</code></p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索<code>google_analytics</code>，并填写上述的ID</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Google Analytics</span></span><br><span class="line"><span class="attr">google_analytics:</span></span><br><span class="line">  <span class="string">//</span> <span class="string">!!!此处填写</span></span><br><span class="line">  <span class="attr">tracking_id:</span> <span class="string">G-8W35JPL36V</span></span><br><span class="line">  <span class="comment"># By default, NexT will load an external gtag.js script on your site.</span></span><br><span class="line">  <span class="comment"># If you only need the pageview feature, set the following option to true to get a better performance.</span></span><br><span class="line">  <span class="attr">only_pageview:</span> <span class="literal">false</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>重新生成部署之后应该就可以啦</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Bing收录</p>
+<p>Bing收录的过程类似于Google收录，甚至如果Google收录已经做完，Bing可以直接使用google账号登陆，直接导入Google Search Console的内容，非常方便</p>
+<ul>
+<li>点击<a href="https://www.bing.com/webmasters/home">Bing Webmaster Tools</a>开始提交站点</li>
+<li>忘记是要先登录还是直接可以添加站点了，总之找到添加站点的地方选择<strong>从 GSC 导入你的网站</strong>，之后可能需要验证以下google账号之类的，然后就一键导入了</li>
+<li>记得看下站点地图需不需要手动添加</li>
+</ul>
+<blockquote>
+<p>时间久了导致描述比较模糊，遇到问题可以留言。</p>
+</blockquote>
+</li>
+<li>
+<p>百度收录</p>
+<p>如果没有自己注册域名的话，百度是不可能收录Github Pages的，因为Github把百度的爬虫禁用了，所以如果希望百度可以搜索到自己的博客站点，需要购买域名并和Github Pages绑定一下，详细步骤自行Google。</p>
+<p>对于我来说，添加一个google就足够了，毕竟行业相关，科学上网是难不倒大家的。</p>
+</li>
+<li>
+<p>创建关于我、分类页面</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>menu</code>可以设置站点首页显示的菜单，如下</p>
+<figure class="highlight dts"><table><tbody><tr><td class="code"><pre><span class="line"><span class="symbol">menu:</span></span><br><span class="line"><span class="symbol">  home:</span> / || fa fa-home</span><br><span class="line">  <span class="meta">#tags: /tags/ || fa fa-tags</span></span><br><span class="line"><span class="symbol">  archives:</span> <span class="keyword">/archives/</span> || fa fa-archive</span><br><span class="line"><span class="symbol">  categories:</span> <span class="keyword">/categories/</span> || fa fa-th</span><br><span class="line"><span class="symbol">  about:</span> <span class="keyword">/about/</span> || fa fa-user</span><br><span class="line">  <span class="meta">#schedule: /schedule/ || fa fa-calendar</span></span><br><span class="line">  <span class="meta">#sitemap: /sitemap.xml || fa fa-sitemap</span></span><br><span class="line">  <span class="meta">#commonweal: /404/ || fa fa-heartbeat</span></span><br></pre></td></tr></tbody></table></figure>
+<p>我这边打开了<strong>分类</strong>和<strong>关于</strong>两个界面，此时本地验证的话，可以发现首页已经有相关的菜单栏，但是点进去会报<code>not found</code>，需要我们手动创建相关的页面。</p>
+</li>
+<li>
+<p>在hexo目录下，打开终端，执行以下命令</p>
+<figure class="highlight haxe"><table><tbody><tr><td class="code"><pre><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> categories</span><br><span class="line">hexo <span class="keyword">new</span> <span class="type">page</span> about</span><br></pre></td></tr></tbody></table></figure>
+<p>执行之后，会在<em>hexo/source/<em>目录下生成两个新的目录</em>about</em>和<em>categories</em>，两个目录下都会生成一个<code>index.md</code>文件，这个便是我们的页面了</p>
+</li>
+<li>
+<p><em>categories</em>目录下的<code>index.md</code>只需要修改类型即可，其内容会根据我们每篇博客中设定的分类自动生成</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment">#title: Blog Categories</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:36:03</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">categories</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p><em>about</em>目录下的<code>index.md</code>除了需要修改类型，还需要我们手动添加内容，就像写一篇博客一样。</p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">About</span> <span class="string">Me</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2023-04-14 00:35:50</span></span><br><span class="line"><span class="attr">layout:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">about</span></span><br><span class="line"><span class="attr">comments:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="string">CONTENT</span></span><br><span class="line"><span class="string">······</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>添加评论系统 <code>Gitalk</code></p>
+<ul>
+<li>
+<p>登录 <strong>Github</strong> ，右键头像，在下拉菜单中，选择“<strong>Settings</strong>”选项</p>
+</li>
+<li>
+<p>在左侧菜单选择“<strong>Developer settings</strong>”选项，进入开发者页面</p>
+</li>
+<li>
+<p>选择 <strong>OAuth Apps</strong> ，并点击“<strong>New OAuth App</strong>”创建新授权应用</p>
+</li>
+<li>
+<p>设置该应用相关信息，其中</p>
+<ul>
+<li>Application name为应用名称，如<code>博客评论</code></li>
+<li>Homepage URL为博客主页，需要和自己的博客一致</li>
+<li>Authorization callback URL 授权回调页面（同 Homepage URL）</li>
+</ul>
+</li>
+<li>
+<p>点击创建应用，进入新的页面</p>
+</li>
+<li>
+<p>在新页面的<strong>Clients secrets</strong>处，点击<code>Generate a new client secret</code>，可能需要验证密码才能生成。</p>
+</li>
+<li>
+<p>保存生成的client secret和 client id，后续要用到</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>gitalk</code>，配置如下：</p>
+<figure class="highlight awk"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Gitalk</span></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="regexp">//</span> 启用</span><br><span class="line">  enable: true</span><br><span class="line">  <span class="regexp">//</span> github用户名</span><br><span class="line">  github_id: treeknows</span><br><span class="line">  <span class="regexp">//</span> 在哪个仓库下，推荐博客所在的仓库</span><br><span class="line">  repo: treeknows.github.io</span><br><span class="line">  <span class="regexp">//</span> 刚刚保存的ID</span><br><span class="line">  client_id: <span class="number">22</span>fb59ff85c3aef2677a</span><br><span class="line">  <span class="regexp">//</span> 刚刚生成的secret</span><br><span class="line">  client_secret: <span class="number">246142</span>feb132313b08ee3ff55678c88244b67b97</span><br><span class="line">  <span class="regexp">//</span> Github用户名</span><br><span class="line">  admin_user: treeknows</span><br><span class="line">  <span class="comment">## 点击评论框时会不会变黑，说实话true了不太好看</span></span><br><span class="line">  distraction_free_mode: false <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk's display language depends on user's browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language:</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>参考注释进行配置。选择<code>repo</code>时要注意，<code>repo</code>应该是public的，否则评论是无法使用的。这也就是为什么在第一篇博客中，推荐将博客所在的仓库设为public而不是private，就是为了此时的方便。</p>
+</li>
+<li>
+<p>在<strong>主题配置文件</strong>中，搜索<code>comments</code>，激活gitalk</p>
+<figure class="highlight nestedtext"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line"><span class="attribute">comments</span><span class="punctuation">:</span></span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  <span class="attribute">style</span><span class="punctuation">:</span> <span class="string">tabs</span></span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  <span class="attribute">// !!! 选择gitalk</span></span><br><span class="line"><span class="attribute">  active</span><span class="punctuation">:</span> <span class="string">gitalk</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li>
+<p>执行<code>hexo clean &amp;&amp; hexo g -d</code>重新生成并部署，打开博客选择一篇文章查看效果。</p>
+</li>
+<li>
+<p>注意，第一次使用评论系统是需要进行一个初始化的，似乎只需要验证一下github账号即可，比较简单。在之后的post了新文章后，自测是不需要再次手动初始化的。（但是网上说依旧需要手动初始化😶</p>
+</li>
+</ul>
+</li>
+<li>
+<p>增加版权信息</p>
+<ul>
+<li>
+<p>在<strong>主题配置文件</strong>中搜索<code>creative_commons</code></p>
+<figure class="highlight yaml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attr">creative_commons:</span></span><br><span class="line">  <span class="attr">license:</span> <span class="string">by-nc-sa</span></span><br><span class="line">  <span class="comment">## 在侧边栏显示一个协议的图标</span></span><br><span class="line">  <span class="attr">sidebar:</span> <span class="literal">false</span></span><br><span class="line">  <span class="comment">## 文章底部显示版权信息</span></span><br><span class="line">  <span class="attr">post:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">language:</span></span><br></pre></td></tr></tbody></table></figure>
+<p>将<code>post</code>设置为true，重新生成即可。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>图床选择</p>
+<ul>
+<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的博客，迫使自己尽快掌握图床的使用🤡</li>
+</ul>
+</li>
+<li>
+<p>添加深色模式 - updated on 2023.10.17</p>
+<ul>
+<li>
+<p>NexT 8.x原生已经支持暗黑模式，需要在<strong>主题配置文件</strong>中搜索<code>darkmode</code>，设置为true即可。但是这种配置方式没有切换按钮，默认根据系统偏好决定是否启动暗黑模式。</p>
+</li>
+<li>
+<p>NexT 7.x / 8.x 自动添加可切换的深色模式</p>
+<ul>
+<li>安装<code>hexo-next-darkmode</code>插件</li>
+</ul>
+<figure class="highlight lua"><table><tbody><tr><td class="code"><pre><span class="line">npm install hexo-<span class="built_in">next</span>-darkmode <span class="comment">--save</span></span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li>配置Hexo插件，在<strong>主题配置文件</strong>中，添加如下内容：</li>
+</ul>
+<figure class="highlight clean"><table><tbody><tr><td class="code"><pre><span class="line"># Darkmode JS</span><br><span class="line"># For more information: https:<span class="comment">//github.com/rqh656418510/hexo-next-darkmode, https://github.com/sandoche/Darkmode.js</span></span><br><span class="line">darkmode_js:</span><br><span class="line">  enable: true</span><br><span class="line">  ## 距离底部的距离</span><br><span class="line">  bottom: <span class="string">'32px'</span> # default: <span class="string">'32px'</span></span><br><span class="line">  ## 距离右边的距离</span><br><span class="line">  right: <span class="string">'32px'</span> # default: <span class="string">'32px'</span></span><br><span class="line">  left: <span class="string">'unset'</span> # default: <span class="string">'unset'</span></span><br><span class="line">  time: <span class="string">'0.5s'</span> # default: <span class="string">'0.3s'</span></span><br><span class="line">  mixColor: <span class="string">'transparent'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  backgroundColor: <span class="string">'transparent'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  buttonColorDark: <span class="string">'#100f2c'</span> # default: <span class="string">'#100f2c'</span></span><br><span class="line">  buttonColorLight: <span class="string">'#fff'</span> # default: <span class="string">'#fff'</span></span><br><span class="line">  ## 默认激活</span><br><span class="line">  isActivated: false # default false</span><br><span class="line">  ## 保存状态到cookies</span><br><span class="line">  saveInCookies: true # default: true</span><br><span class="line">  label: <span class="string">'🌓'</span> # default: <span class="string">''</span></span><br><span class="line">  ## 自动匹配系统主题</span><br><span class="line">  autoMatchOsTheme: true # default: true</span><br><span class="line">  libUrl: # Set custom library cdn url for Darkmode.js</span><br></pre></td></tr></tbody></table></figure>
+<blockquote>
+<p><code>isActivated: true</code>：默认激活暗黑/夜间模式，请始终与 <code>saveInCookies: false</code>、<code>autoMatchOsTheme: false</code> 一起使用</p>
+</blockquote>
+<ul>
+<li>确保NexT原生的<code>darkmode</code>选项设置为<code>false</code></li>
+</ul>
+<p>效果展示：</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/%E6%9A%97%E9%BB%91%E6%A8%A1%E5%BC%8F%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA.PNG" alt="暗黑模式效果展示"></p>
+<blockquote>
+<p>深色模式参考博客：<a href="https://blog.csdn.net/rqh656418510/article/details/123676457">https://blog.csdn.net/rqh656418510/article/details/123676457</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>Blog支持emoji表情 - updated on 2024.01.04</p>
+<p>想要在文章中使用emoji表情已知的方法有两种：</p>
+<ul>
+<li>
+<p>复制emoji表情直接粘贴在Typora中，以这种方式贴的emoji可以直接在Blog网站里渲染出来，缺点是寻找表情比较麻烦。</p>
+<p><a href="https://www.emojiall.com/zh-hans">一个emoji表情网站</a></p>
+</li>
+<li>
+<p>此外，Typora支持直接输入emoji表情，其格式为<code>:emoji_code:</code>，例如<code>:smile:</code>对应<span class="github-emoji"><span>😄</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span>。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。</p>
+<p><strong>参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。</strong></p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结">总结</h2>
+<p>到这里，配置相关的介绍基本就结束了，可能会有一些没有涉及到的小修改，可以参考我博客源码中的配置文件：<a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/_config.yml">站点配置文件</a> &amp; <a href="https://github.com/treeknows/treeknows.github.io/blob/hexo/hexo/themes/next/_config.yml">主题配置文件</a>，里面会有一部分的中文注释，帮助理解。</p>
+<p>另外，如果觉得我的博客风格还不错，又不想浪费过多的时间配置，似乎可以直接clone我的<a href="https://github.com/treeknows/treeknows.github.io.git">博客源码</a>，修改一些关键信息为自己的信息，实现极速建站。</p>
+<p>大致需要的步骤可能为：</p>
+<ol>
+<li>Fork我的仓库</li>
+<li>修改仓库名字为自己的<code>username.github.io</code></li>
+<li>clone到本地</li>
+<li>修改<strong>站点配置文件</strong>中部署相关的的配置，搜索<code>deploy</code></li>
+<li>修改基本信息，如网站title、头像之类的</li>
+<li>删除我为数不多的博客</li>
+<li>GA &amp; Gitalk等换成自己的id</li>
+<li>提交自己新的站点到Google Search Console</li>
+<li>尝试部署</li>
+</ol>
+<p>只脑补到这些，未经验证，不包成功哈🙄</p>
+]]></content>
+      <categories>
+        <category>博客搭建</category>
+      </categories>
+      <tags>
+        <tag>经验</tag>
+        <tag>Github Pages</tag>
+        <tag>Hexo</tag>
+        <tag>NexT主题</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>认识SLAM算法</title>
+    <url>/what-is-slam-algo/</url>
+    <content><![CDATA[<h2 id="前言">前言</h2>
+<p>因为工作原因，接触到了SLAM算法。一开始只是知道了有这么个词儿，慢慢的才试着去了解SLAM算法的含义。好记性不如烂笔头，更何况我现在没有好记性。</p>
+<h2 id="什么是SLAM算法">什么是SLAM算法</h2>
+<p>SLAM的全拼为Simultaneous Localization And Mapping，中文一般译为同步定位与地图构建。从名字可以看出，SLAM算法的核心有两点：</p>
+<ul>
+<li>定位</li>
+<li>建图</li>
+</ul>
+<p>定位即获取自己当前所在空间环境中的位置，建图即将看到或感知到的环境记录下来，构建成环境地图。</p>
+<span id="more"></span>
+<p>因此，SLAM算法的目标可以总结为：<strong>在没有任何先验知识的情况下，根据传感器数据实时构建周围的地图环境，同时根据这个地图推测自身的定位</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM%E7%9B%AE%E6%A0%87.PNG" alt="SLAM目标"></p>
+<p>SLAM算法的工作内容，可以形象的描述为：</p>
+<p>当我们进入一个未知的环境时，</p>
+<ol>
+<li>特征标记：用”眼睛“观察周围地标，并记住他们的特征。</li>
+<li>在自己的”脑海“中，根据双眼获得的信息，把特征地标在三维地图中重建出来。</li>
+<li>当自己在行走时，不断获取新的特征地标，并且校正头脑中的地图模型。</li>
+<li>根据自己前一段时间行走获得的地表特征，确定自己的位置。</li>
+</ol>
+<p>在此过程中，定位和建图是同时进行的。</p>
+<h3 id="VR中的SLAM">VR中的SLAM</h3>
+<p>VR中的SLAM所依靠的传感器为IMU和Camera，通过传感器定位自己在空间中的哪个位置，我在哪里（移动位置x,y,z），我在看哪个方向（旋转角度），同时建图以确定周边的环境是什么样子的。</p>
+<h4 id="定位">定位</h4>
+<p>在VR中，SLAM算法的输出就是<strong>6DOF</strong>(degree of freedom)，即orientation + position。其实这个6DOF指的头6，在VR中还有手6DOF和物体6DOF的概念。</p>
+<h4 id="建图">建图</h4>
+<p>SLAM建立的地图可以分为三种：</p>
+<ul>
+<li>稀疏地图</li>
+<li>稠密地图</li>
+<li>语义地图</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/slam_map_result.png" alt="slam_map_result"></p>
+<h2 id="SLAM-Overview">SLAM Overview</h2>
+<h3 id="硬件方案">硬件方案</h3>
+<h4 id="6DOF的硬件方案：Inside-Out和Outside-In">6DOF的硬件方案：Inside-Out和Outside-In</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">方案</th>
+<th style="text-align:left">Outside-in 外向内</th>
+<th>Inside-out 内向外</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">原理</td>
+<td style="text-align:left">基于标记，需要固定在外部的追踪设备</td>
+<td>基于无标记，只需VR上的摄像头，使用SLAM算法</td>
+</tr>
+<tr>
+<td style="text-align:center">追踪精度</td>
+<td style="text-align:left">精度高，小于1mm</td>
+<td>精度略低</td>
+</tr>
+<tr>
+<td style="text-align:center">可移动范围</td>
+<td style="text-align:left">仅限于传感器监测范围</td>
+<td>移动范围无限制</td>
+</tr>
+<tr>
+<td style="text-align:center">跟踪死角</td>
+<td style="text-align:left">正常几乎无死角</td>
+<td>有跟踪死角</td>
+</tr>
+<tr>
+<td style="text-align:center">延迟</td>
+<td style="text-align:left">延迟相对少</td>
+<td>有一定延迟</td>
+</tr>
+<tr>
+<td style="text-align:center">抗遮挡</td>
+<td style="text-align:left">易受遮挡影响</td>
+<td>无遮挡问题</td>
+</tr>
+<tr>
+<td style="text-align:center">事前环境准备</td>
+<td style="text-align:left">需要</td>
+<td>不需要</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机">SLAM硬件：相机</h4>
+<table>
+<thead>
+<tr>
+<th>单目相机</th>
+<th>双目相机</th>
+<th>RGB-D相机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成本低</td>
+<td>计算深度</td>
+<td>主动测深度</td>
+</tr>
+<tr>
+<td>距离不受限</td>
+<td>距离不受限</td>
+<td>重建效果好</td>
+</tr>
+<tr>
+<td>尺度不确定性</td>
+<td>配置复杂</td>
+<td>测量范围小</td>
+</tr>
+<tr>
+<td>初始化问题</td>
+<td>计算量大</td>
+<td>受日光和材质干扰</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：-IMU">SLAM硬件： IMU</h4>
+<table>
+<thead>
+<tr>
+<th>加速计</th>
+<th>陀螺仪</th>
+<th>磁力计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检测物体在载体坐标系统独立三轴的加速度信号，对单方向加速度积分即可得到方向速度</td>
+<td>检测载体相对于导航坐标系的角速度信号</td>
+<td>检测载体相对于地球磁场的东南西北方向信号</td>
+</tr>
+<tr>
+<td>”我们又前进了几米“</td>
+<td>”我们转了几圈“</td>
+<td>”我们向西偏北方向“</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：相机和IMU互补">SLAM硬件：相机和IMU互补</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>IMU</th>
+<th>Camera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优势</td>
+<td>快速响应<br>不受成像质量影响<br>角速度普遍比较准确</td>
+<td>不产生漂移</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>存在零偏<br>低精度IMU积分位姿发散</td>
+<td>受图像遮挡、运动物体干扰<br>快速移动时易丢失</td>
+</tr>
+</tbody>
+</table>
+<h4 id="SLAM硬件：摆放要求">SLAM硬件：摆放要求</h4>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/202311030004005.png" alt="camera_place"></p>
+<ul>
+<li>下面两个相机是主相机，需要下偏，确保充足的双目重叠</li>
+<li>上面两个相机是辅相机，上偏，扩大跟踪FOV的同时兼顾前方盲区深度</li>
+<li>SLAM双目匹配，以及手柄、手势的主要活动区域，基本是以下面两个相机为主</li>
+<li>四目相机和IMU之间要保证刚性连接，否则一旦发生位移，就需要重新标定</li>
+</ul>
+<h3 id="6DOF标定">6DOF标定</h3>
+<h4 id="标定的目的">标定的目的</h4>
+<p>拿拍照来讲，拍照即为将三维的场景通过某种变换得到一张二维的照片，标定的目的就在于计算出一个数学模型，从而使得通过该数学模型，能够由二维的照片反推出三维的场景。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/purpose_of_calibration_result.png" alt="purpose_of_calibration_result"></p>
+<h4 id="标定的好坏">标定的好坏</h4>
+<p>重投影误差：真实三维空间点在图像平面上的投影（图像上的像素点）和重投影（用计算值得到的虚拟像素点）之间的差值。</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/reprojection_error_result.png" alt="reprojection_error_result"></p>
+<p>图中<strong>e</strong>即为计算得到的重投影误差值</p>
+<h3 id="SLAM算法模块">SLAM算法模块</h3>
+<ul>
+<li>
+<p>传感器模块：数据采集</p>
+</li>
+<li>
+<p>视觉里程计模块：特征匹配</p>
+</li>
+<li>
+<p>后端模块：消除视觉里程计累计误差</p>
+</li>
+<li>
+<p>地图模块：构建三维地图</p>
+</li>
+<li>
+<p>回环检测模块：空间积累误差消除</p>
+</li>
+</ul>
+<p>SLAM系统可以分为前台线程和后台线程，其中：</p>
+<p>前台线程接收传感器数据，进行SLAM初始化和特征跟踪与位姿实时求解，并输出设备实时位姿和三维点云。</p>
+<p>后台线程进行局部或全局优化，减少误差累积；进行场景回路检测，并支持场景重定位。</p>
+<h3 id="SLAM业务架构">SLAM业务架构</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/SLAM_ARCH.png" alt="SLAM_ARCH"></p>
+<p>在当前主流的解决方案中，VR Service是比较重要的一个模块。比如高通的QVRService，QVR负责接收sensor的数据，并交由DSP上的SLAM算法做融合，生成的6DOF pose通过QVR传递给SDK/APP端。</p>
+<h3 id="SLAM轨迹误差">SLAM轨迹误差</h3>
+<p>绝对轨迹误差：真实轨迹点和估计轨迹点之间的差值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/abs_pose_error.png" alt="ads_pose_error"></p>
+<p>相对轨迹误差：位姿变化量的插值</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/relative_pose_error.png" alt="relative_pose_error"></p>
+<h3 id="SLAM性能指标">SLAM性能指标</h3>
+<table>
+<thead>
+<tr>
+<th>绝对位姿误差</th>
+<th>位置最大误差 &lt; 10cm，位置平均误差 &lt; 4cm<br>最大角度误差 &lt; 4 degree，平均角度误差 &lt; 1 degree</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>相对位姿误差</td>
+<td>位置最大误差 &lt; 10mm，位置平均误差 &lt; 1mm<br>最大角度误差 &lt; 0.5 degree，平均角度误差 &lt; 0.1 degree</td>
+</tr>
+<tr>
+<td>漂移/draft</td>
+<td>无漂移，出现漂移，精度会非常差</td>
+</tr>
+<tr>
+<td>抖动/jitter</td>
+<td>位置最大误差 &lt; 3 mm，位置平均误差 &lt; 0.5mm<br>最大角度误差 &lt; 0.2 degree，平均角度误差 &lt; 0.02 degree</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>延迟 &lt; 5ms</td>
+</tr>
+<tr>
+<td>重定位</td>
+<td>重定位时间 &lt; 1s，位置精度 &lt; 1cm</td>
+</tr>
+<tr>
+<td>追踪范围</td>
+<td>追踪范围 &lt; 10m * 10m</td>
+</tr>
+<tr>
+<td>光照敏感性</td>
+<td>明亮、灰暗、漆黑</td>
+</tr>
+<tr>
+<td>纹理敏感性</td>
+<td>高纹理、低纹理、无纹理</td>
+</tr>
+<tr>
+<td>跟踪敏感性</td>
+<td>位姿多变、快速距离切换、移动物体背景、传感器短暂失效</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Video-See-Through">Video See Through</h2>
+<p>AR/VR显示技术可以分为OST和VST</p>
+<ul>
+<li>OST：光学透视，真实世界通过放置在用户眼前的半透明光学合成器看到的，同时光学合成器也被用来将计算机生成的图像反射到用户的眼睛里，从而将真实世界和虚拟世界结合起来。</li>
+<li>VST：视频透视，通过相机实时捕捉真实画面，再和虚拟世界该呈现的画面融合，最终呈现在显示屏幕上。</li>
+</ul>
+<h2 id="三维重建">三维重建</h2>
+<p>常常被简写为3DR，全称为<strong>3D Reconstruction</strong>，其主要目的为实现更好的交互。</p>
+<h3 id="基本流程">基本流程</h3>
+<p>稀疏点云重建—&gt;稠密点云重建—&gt;点云网格重建—&gt;三维语义重建</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_process.png" alt="3DR_process"></p>
+<p>3DR的实现依赖于很多算法，如场景理解、语义分割、目标识别、位姿估计等</p>
+<h3 id="3DR框架">3DR框架</h3>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/3DR_framework.png" alt="3DR_framework"></p>
+<p>当前还处于1.0时代，有了平面检测，但是也只是平面的检测，而不是桌面的检测或地面的检测或具体的物体平面。</p>
+<h2 id="后记">后记</h2>
+<p>囫囵的介绍了一下SLAM算法，但是很多模块并没有写的很详细。6DOF标定部分还有很多不曾提到的内容：6DOF标定过程、6DOF标定文件、畸变矫正等等等等，酝酿酝酿再补充。</p>
+<hr>
+<blockquote>
+<p>总的来讲，行文断断续续，越断越爽，越续越差。<span class="github-emoji"><span>😑</span><img src="https://github.githubassets.com/images/icons/emoji/unicode/1f611.png?v8" aria-hidden="true" onerror="this.parent.classList.add('github-emoji-fallback')"></span></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>XR</category>
+      </categories>
+      <tags>
+        <tag>Study Notes</tag>
+        <tag>XR</tag>
+      </tags>
+  </entry>
+</search>
