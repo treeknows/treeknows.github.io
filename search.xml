@@ -905,7 +905,7 @@
 <li>
 <p>图床选择</p>
 <ul>
-<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的博客，迫使自己尽快掌握图床的使用🤡</li>
+<li>把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于<strong>图床的使用</strong>的<a href="https://treeknows.github.io/how-to-insert-image-into-blog/">博客</a>，迫使自己尽快掌握图床的使用🤡</li>
 </ul>
 </li>
 <li>
@@ -951,6 +951,19 @@
 <p><strong>参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。</strong></p>
 </li>
 </ul>
+</li>
+<li>
+<p>博客图片支持点击放大 - updated on 2024.03.15</p>
+<p>该功能需要使用<code>fancybox</code>插件，具体步骤如下：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line"><span class="regexp">//</span> 入到主题文件夹的lib目录下</span><br><span class="line">cd <span class="keyword">next</span><span class="regexp">/source/</span>lib</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> 下载插件</span><br><span class="line">git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/theme-next/</span>theme-<span class="keyword">next</span>-fancybox3 fancybox</span><br></pre></td></tr></table></figure>
+<p>修改<strong>主题配置文件</strong>，搜索关键字<code>fancybox</code>，将false设为true即可</p>
+<p><img src="https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/fancybox_config.jpg" alt=""></p>
+<p>配置完成后可以先在本地执行<code>hexo clean &amp;&amp; hexo g &amp;&amp; hexo s</code>验证一下，验证无误即可部署到服务器。</p>
+<p>参考自：<a href="https://erlnesa.com/2021/01/%E4%B8%BAhexo%E5%8D%9A%E5%AE%A2%E5%AE%9E%E7%8E%B0%E5%9B%BE%E7%89%87%E7%82%B9%E5%87%BB%E6%94%BE%E5%A4%A7%E6%B8%B8%E8%A7%88%E5%8A%9F%E8%83%BD-next%E4%B8%BB%E9%A2%98/">blog</a></p>
+<blockquote>
+<p>这里其实有一个问题需要注意，下载下来的fancybox插件被next目录下的*.gitignore*文件忽略了，因此可能无法提交到备份博客配置的master分支。也就意味着可能别的PC端可能就没有这个插件，那么通过别的PC去部署博客就可能会导致fancybox功能失效甚至<code>hexo generate</code>都会失败。</p>
+<p>后续思考一下怎么处理。</p>
+</blockquote>
 </li>
 </ul>
 <h2 id="总结">总结</h2>
