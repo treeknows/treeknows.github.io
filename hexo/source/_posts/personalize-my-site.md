@@ -498,7 +498,7 @@ comments: true
 
 - 图床选择
 
-  - 把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于**图床的使用**的博客，迫使自己尽快掌握图床的使用🤡
+  - 把图床放在最后是因为，我还没有熟悉图床的使用。从这两篇无图模式的博客也可以看出来。因此接下来会写一篇关于**图床的使用**的[博客](https://treeknows.github.io/how-to-insert-image-into-blog/)，迫使自己尽快掌握图床的使用🤡
   
 - 添加深色模式 - updated on 2023.10.17
 
@@ -560,7 +560,30 @@ comments: true
   - 此外，Typora支持直接输入emoji表情，其格式为`:emoji_code:`，例如`:smile:`对应:smile:。这种方式在Typora里可以直接显示表情，但是部署到Github之后表情无法渲染，只会显示表情编码，需要安装插件解决此问题。
 
     **参考几个博客，尝试安装了几个插件，但是本地验证并没有效果。需要后续再找原因。**
+  
+- 博客图片支持点击放大 - updated on 2024.03.15
 
+  该功能需要使用`fancybox`插件，具体步骤如下：
+
+  ```
+  // 入到主题文件夹的lib目录下
+  cd next/source/lib
+  
+  // 下载插件
+  git clone https://github.com/theme-next/theme-next-fancybox3 fancybox
+  ```
+
+  修改**主题配置文件**，搜索关键字`fancybox`，将false设为true即可
+
+  ![fancybox_config](https://raw.githubusercontent.com/treeknows/blog_pic/master/imgs/fancybox_config.jpg)
+
+  配置完成后可以先在本地执行`hexo clean && hexo g && hexo s`验证一下，验证无误即可部署到服务器。
+
+  参考自：[blog](https://erlnesa.com/2021/01/%E4%B8%BAhexo%E5%8D%9A%E5%AE%A2%E5%AE%9E%E7%8E%B0%E5%9B%BE%E7%89%87%E7%82%B9%E5%87%BB%E6%94%BE%E5%A4%A7%E6%B8%B8%E8%A7%88%E5%8A%9F%E8%83%BD-next%E4%B8%BB%E9%A2%98/)
+
+  >这里其实有一个问题需要注意，下载下来的fancybox插件被next目录下的*.gitignore*文件忽略了，因此可能无法提交到备份博客配置的master分支。也就意味着可能别的PC端可能就没有这个插件，那么通过别的PC去部署博客就可能会导致fancybox功能失效甚至`hexo generate`都会失败。
+  >
+  >后续思考一下怎么处理。
 
 ## 总结
 

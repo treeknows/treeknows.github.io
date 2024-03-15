@@ -91,3 +91,66 @@ AS 4.2 以上：
 ​                moudle的build.gradle gradle.projectsEvaluated {    tasks.withType(JavaCompile) {        Set<File> fileSet = options.bootstrapClasspath.getFiles()        List<File> newFileList =  new ArrayList<>();        //JAVA语法，可连续调用，输入参数建议为相对路径        newFileList.add(new File("libs/framework.jar"))        //最后将原始参数添加        newFileList.addAll(fileSet)        options.bootstrapClasspath = files(                newFileList.toArray()        )    } }              
 
 参考链接：https://blog.csdn.net/u014175785/article/details/116235760
+
+
+
+
+
+---
+
+```
+allprojects {
+    repositories {
+        jcenter()
+        google()
+    }
+    // add this
+    buildDir = "D:/tmp/${rootProject.name}/${project.name}"
+}
+```
+
+ndk-build这种类型的编译会遇到编译路径过长导致找不到编译中间文件的报错，可以在工程的build.gradle中添加，指定编译路径
+
+
+
+
+
+
+
+
+
+## [Android 源码更换目录后编译失败 FAILED: out/target/product/xxxx/abl.elf](https://www.cnblogs.com/xuewangkai/p/14385813.html)
+
+项目中把Android 10源码移动到另一个目录后编译失败, 报类似下面的错误:
+
+FAILED: out/target/product/xxxx/abl.elf 
+
+参考: https://blog.csdn.net/ngyzqf/article/details/82054329 解决了.
+
+ 
+
+错误1，abl.elf 编译失败是因为源码编译后，编译路径被记下了，存放在了文件里 bootable/bootloader/edk2/Conf/BuildEnv.sh，解决办法, 在 bootable/bootloader/edk2 目录下执行:
+
+```
+rm -rf Conf/BuildEnv.sh
+unset EDK_TOOLS_PATH
+. ./edksetup.sh BaseTools
+```
+
+ 
+
+错误2: make[3]: *** No rule to make target '/usr/include/x86_64-linux-gnu/bits/predefs.h', needed by 'BasePeCoff.o'.  Stop.
+
+解决办法:把中间文件清掉即可, 进入 bootable/bootloader/edk2/BaseTools 目录:
+
+```
+make clean
+```
+
+之后重新编译源码即可.
+
+ 
+
+思路: 一般这种问题都是一开始源码编译后记录了编译路径,更换路径后去找之前路径无法找到而报错, 方法就是清理之前编译生成的中间文件.
+
+我在编译中还碰到cmake工程编译生成的 .cxx 目录中文件也记录了上一次编译路径等信息,导致更换路径编译失败, 解决方法就是把 .cxx 目录删除, 重新编译就好.
